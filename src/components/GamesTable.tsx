@@ -67,10 +67,10 @@ export default function GamesTable({ matches }: GamesTableProps) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                     {team1Won ? (
-                      <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
-                    ) : (
-                      <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
-                    )}
+                      <div title="Winner">
+                        <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
+                      </div>
+                    ) : null}
                   </td>
                 </tr>
               );

@@ -75,8 +75,9 @@ export async function readRatingsTab(spreadsheetId: string): Promise<(string | n
   try {
     const data = await getSheetData(spreadsheetId, 'Ratings!A1:ZZ');
     return data as (string | number)[][];
-  } catch {
-    // Ratings tab might not exist yet
+  } catch (error) {
+    // Ratings tab might not exist yet on first run
+    console.warn('Ratings tab not found or error reading it:', error);
     return [];
   }
 }

@@ -23,6 +23,8 @@ const LEVEL_NAMES = {
 };
 
 export default function LevelLeaderboards({ levelLeaderboards }: LevelLeaderboardsProps) {
+  // Only showing ADV, INT, and PLUS levels in the main view
+  // BEG level can be added if needed
   const levels: PlayerLevel[] = ['ADV', 'INT', 'PLUS'];
 
   return (

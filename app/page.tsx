@@ -40,8 +40,9 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchLeaderboardData(currentWeek);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Fetch data only once on initial load
+    // Week changes are handled by handleWeekChange
+    fetchLeaderboardData(1);
   }, []);
 
   const handleWeekChange = (newWeek: number) => {

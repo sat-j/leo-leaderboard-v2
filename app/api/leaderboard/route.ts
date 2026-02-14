@@ -130,9 +130,8 @@ export async function GET(request: NextRequest) {
     // Read matches (we need to read all matches for statistics)
     let allMatches: Match[] = [];
     try {
-      // Try to read from a default scores tab or the last used one
-      // For now, we'll need to handle this - maybe store last tab name
-      // Let's try common tab names
+      // Try to read from common tab names
+      // Consider storing the last used tab name in environment variables for production
       const tabNames = ['Scores', 'scores', 'Week1', 'week1'];
       for (const tabName of tabNames) {
         try {
