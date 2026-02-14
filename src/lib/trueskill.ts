@@ -1,5 +1,5 @@
 import { Rating, rate, TrueSkill } from 'ts-trueskill';
-import { Match, PlayerRating, PlayerLevel } from '@/types';
+import { Match, PlayerLevel } from '@/types';
 
 export const TRUESKILL_CONFIG = {
   mu: 25,

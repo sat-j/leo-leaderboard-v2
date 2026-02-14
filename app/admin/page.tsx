@@ -46,10 +46,11 @@ export default function AdminPage() {
         text: data.message || 'Scores processed successfully!'
       });
       setScoresTabName('');
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setMessage({
         type: 'error',
-        text: err.message || 'Failed to process scores'
+        text: errorMessage
       });
     } finally {
       setProcessing(false);

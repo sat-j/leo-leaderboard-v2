@@ -31,8 +31,9 @@ export default function Home() {
       setData(result);
       setMaxWeek(result.maxWeek);
       setCurrentWeek(result.currentWeek);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -40,6 +41,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchLeaderboardData(currentWeek);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleWeekChange = (newWeek: number) => {

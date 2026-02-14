@@ -28,7 +28,7 @@ export async function getSheetData(spreadsheetId: string, range: string) {
 export async function updateSheetData(
   spreadsheetId: string,
   range: string,
-  values: any[][]
+  values: (string | number)[][]
 ) {
   try {
     const auth = getAuth();
@@ -71,11 +71,11 @@ export async function readScoresTab(spreadsheetId: string, tabName: string): Pro
   }));
 }
 
-export async function readRatingsTab(spreadsheetId: string): Promise<any[]> {
+export async function readRatingsTab(spreadsheetId: string): Promise<(string | number)[][]> {
   try {
     const data = await getSheetData(spreadsheetId, 'Ratings!A1:ZZ');
-    return data;
-  } catch (error) {
+    return data as (string | number)[][];
+  } catch {
     // Ratings tab might not exist yet
     return [];
   }
@@ -83,7 +83,7 @@ export async function readRatingsTab(spreadsheetId: string): Promise<any[]> {
 
 export async function writeRatingsTab(
   spreadsheetId: string,
-  ratingsData: any[][]
+  ratingsData: (string | number)[][]
 ): Promise<void> {
   await updateSheetData(spreadsheetId, 'Ratings!A1', ratingsData);
 }

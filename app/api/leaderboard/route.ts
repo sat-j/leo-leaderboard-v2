@@ -9,7 +9,7 @@ import {
   calculateRivalries,
   getLevelLeaderboards
 } from '@/lib/calculations';
-import { Player, Match, PlayerRating, PlayerLevel, LeaderboardData } from '@/types';
+import { Match, PlayerRating, PlayerLevel, LeaderboardData } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Parse ratings data
-    const headers = ratingsData[0];
-    const playerRows = ratingsData.slice(1);
+    const headers = ratingsData[0] as string[];
+    const playerRows = ratingsData.slice(1) as string[][];
 
     // Find max week
     const weekColumns = headers.filter((h: string) => h.includes('Week') && h.includes('_Mu'));
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     const week1Ratings = new Map<string, PlayerRating>();
     const playerLevels = new Map<string, PlayerLevel>();
 
-    playerRows.forEach((row: any[]) => {
+    playerRows.forEach((row: string[]) => {
       const playerName = row[0];
       const levelIndex = headers.indexOf('CurrentLevel');
       const level = (row[levelIndex] || 'BEG') as PlayerLevel;
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     const previousWeekRatings = new Map<string, PlayerRating>();
     
     if (previousWeek > 0) {
-      playerRows.forEach((row: any[]) => {
+      playerRows.forEach((row: string[]) => {
         const playerName = row[0];
         const levelIndex = headers.indexOf('CurrentLevel');
         const level = (row[levelIndex] || 'BEG') as PlayerLevel;
@@ -138,12 +138,13 @@ export async function GET(request: NextRequest) {
         try {
           allMatches = await readScoresTab(spreadsheetId, tabName);
           if (allMatches.length > 0) break;
-        } catch (e) {
+        } catch {
           continue;
         }
       }
-    } catch (error) {
-      console.warn('Could not read matches:', error);
+    } catch {
+      // Could not read matches - continue without match data
+      console.warn('Could not read matches from any common tab names');
     }
 
     // Calculate statistics
@@ -193,11 +194,12 @@ export async function GET(request: NextRequest) {
       maxWeek
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching leaderboard:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ 
       error: 'Failed to fetch leaderboard data',
-      details: error.message 
+      details: errorMessage 
     }, { status: 500 });
   }
 }

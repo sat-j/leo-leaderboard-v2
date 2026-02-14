@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readPlayersTab, readScoresTab, readRatingsTab, writeRatingsTab } from '@/lib/googleSheets';
-import { calculateWeekRatings, initializePlayerRating, createRating, PlayerRatingMap } from '@/lib/trueskill';
-import { Player, Match, PlayerLevel } from '@/types';
+import { readPlayersTab, readScoresTab, writeRatingsTab } from '@/lib/googleSheets';
+import { calculateWeekRatings, createRating, PlayerRatingMap } from '@/lib/trueskill';
+import { PlayerLevel } from '@/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
     headers.push('CurrentLevel');
 
-    const ratingsData: any[][] = [headers];
+    const ratingsData: (string | number)[][] = [headers];
 
     // Add player ratings
     players.forEach(player => {
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       }
       
       row.push(player.level);
-      ratingsData.push(row);
+      ratingsData.push(row as string[]);
     });
 
     // Write to Ratings sheet
@@ -97,11 +97,12 @@ export async function POST(request: NextRequest) {
       weeksProcessed: maxWeek
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error processing scores:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ 
       error: 'Failed to process scores',
-      details: error.message 
+      details: errorMessage 
     }, { status: 500 });
   }
 }
