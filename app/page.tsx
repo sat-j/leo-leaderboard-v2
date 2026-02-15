@@ -52,10 +52,10 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-navy-900 to-navy-700 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading leaderboard...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-golden-400 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading leaderboard...</p>
         </div>
       </div>
     );
@@ -63,14 +63,14 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-navy-900 to-navy-700 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => fetchLeaderboardData(currentWeek)}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-navy-600 text-white px-6 py-2 rounded-lg hover:bg-navy-700 transition-colors"
           >
             Retry
           </button>
@@ -84,14 +84,14 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-navy-900 to-navy-700">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
             🏸 Badminton Club Leaderboard
           </h1>
-          <p className="text-gray-600">Track your progress and compete with your club!</p>
+          <p className="text-navy-200">Track your progress and compete with your club!</p>
         </div>
 
         {/* Week Navigation */}
@@ -118,7 +118,7 @@ export default function Home() {
         <GamesTable matches={data.matches} />
 
         {/* Footer */}
-        <div className="mt-12 text-center text-gray-500 text-sm">
+        <div className="mt-12 text-center text-navy-200 text-sm">
           <p>Powered by TrueSkill Rating System</p>
         </div>
       </div>

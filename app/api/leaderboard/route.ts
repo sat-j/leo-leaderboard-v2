@@ -31,9 +31,13 @@ export async function GET(request: NextRequest) {
       }, { status: 404 });
     }
 
-    // Parse ratings data
-    const headers = ratingsData[0] as string[];
-    const playerRows = ratingsData.slice(1) as string[][];
+    // Parse ratings data - readRatingsTab returns array of objects
+    // Extract headers from the first object's keys
+    const headers = Object.keys(ratingsData[0]);
+    // Convert objects to rows for backward compatibility
+    const playerRows = ratingsData.map(obj => 
+      headers.map(header => obj[header])
+    );
 
     // Find max week
     const weekColumns = headers.filter((h: string) => h.includes('Week') && h.includes('_Mu'));
