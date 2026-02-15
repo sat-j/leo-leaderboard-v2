@@ -71,10 +71,30 @@ export async function readScoresTab(spreadsheetId: string, tabName: string): Pro
   }));
 }
 
-export async function readRatingsTab(spreadsheetId: string): Promise<(string | number)[][]> {
+export async function readRatingsTab(spreadsheetId: string): Promise<any[]> {
   try {
     const data = await getSheetData(spreadsheetId, 'Ratings!A1:ZZ');
-    return data as (string | number)[][];
+    
+    if (data.length === 0) return [];
+    
+    // First row is headers
+    const headers = data[0] as string[];
+    const rows = data.slice(1);
+    
+    // Convert to array of objects
+    return rows.map(row => {
+      const obj: any = {};
+      headers.forEach((header, index) => {
+        const value = row[index];
+        // Convert numeric strings to numbers for Mu and Sigma columns
+        if (header.endsWith('_Mu') || header.endsWith('_Sigma')) {
+          obj[header] = value !== undefined && value !== '' ? parseFloat(String(value)) : undefined;
+        } else {
+          obj[header] = value;
+        }
+      });
+      return obj;
+    });
   } catch (error) {
     // Ratings tab might not exist yet on first run
     console.warn('Ratings tab not found or error reading it:', error);
@@ -84,9 +104,56 @@ export async function readRatingsTab(spreadsheetId: string): Promise<(string | n
 
 export async function writeRatingsTab(
   spreadsheetId: string,
-  ratingsData: (string | number)[][]
+  ratingsData: any[]
 ): Promise<void> {
-  await updateSheetData(spreadsheetId, 'Ratings!A1', ratingsData);
+  // Convert array of objects to 2D array format for sheets
+  if (ratingsData.length === 0) {
+    await updateSheetData(spreadsheetId, 'Ratings!A1', []);
+    return;
+  }
+  
+  // Get all unique keys (headers) from all objects
+  const headersSet = new Set<string>();
+  ratingsData.forEach(obj => {
+    Object.keys(obj).forEach(key => headersSet.add(key));
+  });
+  
+  // Sort headers: PlayerName, CurrentLevel, then Week columns in order
+  const headers = Array.from(headersSet).sort((a, b) => {
+    if (a === 'PlayerName') return -1;
+    if (b === 'PlayerName') return 1;
+    if (a === 'CurrentLevel') return -1;
+    if (b === 'CurrentLevel') return 1;
+    
+    // Extract week numbers for Week*_Mu and Week*_Sigma columns
+    const weekRegex = /Week(\d+)_(Mu|Sigma)/;
+    const matchA = a.match(weekRegex);
+    const matchB = b.match(weekRegex);
+    
+    if (matchA && matchB) {
+      const weekA = parseInt(matchA[1]);
+      const weekB = parseInt(matchB[1]);
+      if (weekA !== weekB) return weekA - weekB;
+      // If same week, Mu comes before Sigma
+      return matchA[2] === 'Mu' ? -1 : 1;
+    }
+    
+    return a.localeCompare(b);
+  });
+  
+  // Build 2D array with headers as first row
+  const rows: (string | number)[][] = [headers];
+  
+  // Add data rows
+  ratingsData.forEach(obj => {
+    const row = headers.map(header => {
+      const value = obj[header];
+      return value !== undefined ? value : '';
+    });
+    rows.push(row);
+  });
+  
+  await updateSheetData(spreadsheetId, 'Ratings!A1', rows);
 }
 
 export async function clearRatingsTab(spreadsheetId: string): Promise<void> {
