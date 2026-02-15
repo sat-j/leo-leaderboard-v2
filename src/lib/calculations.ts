@@ -154,6 +154,7 @@ export function calculateRivalries(matches: Match[], upToWeek: number): PlayerPa
 
 export function getLevelLeaderboards(
   ratings: Map<string, PlayerRating>,
+  previousRatings: Map<string, PlayerRating>,
   players: Map<string, PlayerLevel>,
   matches: Match[],
   currentWeek: number
@@ -183,8 +184,16 @@ export function getLevelLeaderboards(
       }
     });
     
+    // Sort by rating gain (current mu - previous mu) descending
     leaderboards[level] = levelPlayers
-      .sort((a, b) => b.mu - a.mu)
+      .sort((a, b) => {
+        const prevA = previousRatings.get(a.playerName);
+        const prevB = previousRatings.get(b.playerName);
+        // Previous ratings should always exist now (either from previous week or initial)
+        const gainA = a.mu - (prevA?.mu ?? 25); // fallback to default initial rating
+        const gainB = b.mu - (prevB?.mu ?? 25);
+        return gainB - gainA;
+      })
       .slice(0, 5);
   });
   

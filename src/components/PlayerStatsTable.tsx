@@ -58,8 +58,8 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
       return <ArrowUpDown className="w-4 h-4 ml-1 text-gray-400" />;
     }
     return sortOrder === 'asc' ? 
-      <ArrowUp className="w-4 h-4 ml-1 text-navy-600" /> : 
-      <ArrowDown className="w-4 h-4 ml-1 text-navy-600" />;
+      <ArrowUp className="w-4 h-4 ml-1 text-electric-600" /> : 
+      <ArrowDown className="w-4 h-4 ml-1 text-electric-600" />;
   };
 
   const formatRatingChange = (change: number) => {
@@ -89,7 +89,7 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
           <select
             value={levelFilter}
             onChange={(e) => setLevelFilter(e.target.value as PlayerLevel | 'ALL')}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-electric-500"
           >
             <option value="ALL">All Levels</option>
             <option value="ADV">ADV</option>
