@@ -13,7 +13,7 @@ export default function StatsGrid({ weekStats }: StatsGridProps) {
       {/* Top 3 Players of the Week */}
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
         <div className="flex items-center gap-3 mb-4">
-          <Trophy className="w-6 h-6 text-golden-500" />
+          <Trophy className="w-6 h-6 text-coral-600" />
           <h3 className="text-lg font-semibold text-gray-800">Top 3 Players of the Week</h3>
         </div>
         <div className="space-y-3">
@@ -23,7 +23,7 @@ export default function StatsGrid({ weekStats }: StatsGridProps) {
                 <span className="font-medium text-gray-700">
                   {idx + 1}. {player.playerName}
                 </span>
-                <span className="text-golden-600 font-semibold">
+                <span className="text-coral-600 font-semibold">
                   +{player.ratingGain.toFixed(1)}
                 </span>
               </div>
@@ -37,7 +37,7 @@ export default function StatsGrid({ weekStats }: StatsGridProps) {
       {/* Top 3 Most Games Played */}
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
         <div className="flex items-center gap-3 mb-4">
-          <Users className="w-6 h-6 text-navy-600" />
+          <Users className="w-6 h-6 text-electric-600" />
           <h3 className="text-lg font-semibold text-gray-800">Most Games Played</h3>
         </div>
         <div className="space-y-3">
@@ -47,7 +47,7 @@ export default function StatsGrid({ weekStats }: StatsGridProps) {
                 <span className="font-medium text-gray-700">
                   {idx + 1}. {player.playerName}
                 </span>
-                <span className="text-navy-600 font-semibold">
+                <span className="text-electric-600 font-semibold">
                   {player.gamesPlayed} games
                 </span>
               </div>
