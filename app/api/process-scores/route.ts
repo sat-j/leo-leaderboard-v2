@@ -163,6 +163,20 @@ export async function POST(request: NextRequest) {
         if (b === 'PlayerName') return 1;
         if (a === 'CurrentLevel') return -1;
         if (b === 'CurrentLevel') return 1;
+        
+        // Extract week numbers for Week*_Mu and Week*_Sigma columns
+        const weekRegex = /Week(\d+)_(Mu|Sigma)/;
+        const matchA = a.match(weekRegex);
+        const matchB = b.match(weekRegex);
+        
+        if (matchA && matchB) {
+          const weekA = parseInt(matchA[1]);
+          const weekB = parseInt(matchB[1]);
+          if (weekA !== weekB) return weekA - weekB;
+          // If same week, Mu comes before Sigma
+          return matchA[2] === 'Mu' ? -1 : 1;
+        }
+        
         return a.localeCompare(b);
       });
 
