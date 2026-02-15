@@ -189,8 +189,9 @@ export function getLevelLeaderboards(
       .sort((a, b) => {
         const prevA = previousRatings.get(a.playerName);
         const prevB = previousRatings.get(b.playerName);
-        const gainA = a.mu - (prevA?.mu ?? a.mu);
-        const gainB = b.mu - (prevB?.mu ?? b.mu);
+        // Previous ratings should always exist now (either from previous week or initial)
+        const gainA = a.mu - (prevA?.mu ?? 25); // fallback to default initial rating
+        const gainB = b.mu - (prevB?.mu ?? 25);
         return gainB - gainA;
       })
       .slice(0, 5);

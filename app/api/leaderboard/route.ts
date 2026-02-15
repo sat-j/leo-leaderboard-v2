@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
               playerName,
               mu: player.initialMu,
               sigma: player.initialSigma,
-              week: 0,
+              week: previousWeek,
               level: player.level
             });
           }
