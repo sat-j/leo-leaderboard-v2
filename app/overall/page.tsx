@@ -86,9 +86,9 @@ export default function OverallPage() {
           </h1>
           <p className="text-navy-200">Cumulative player statistics across all weeks</p>
           <div className="mt-4 flex justify-center gap-4 text-navy-200 text-sm">
-            <span>Total Weeks: <strong className="text-golden-400">{data.totalWeeks}</strong></span>
+            <span>Total Weeks: <strong className="text-golden-400" aria-label="Total weeks played">{data.totalWeeks}</strong></span>
             <span>•</span>
-            <span>Total Matches: <strong className="text-golden-400">{data.totalMatches}</strong></span>
+            <span>Total Matches: <strong className="text-golden-400" aria-label="Total matches played">{data.totalMatches}</strong></span>
           </div>
         </div>
 

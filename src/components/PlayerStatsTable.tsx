@@ -37,8 +37,8 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
 
     // Apply sorting
     filtered.sort((a, b) => {
-      let aVal: any = a[sortField as keyof typeof a];
-      let bVal: any = b[sortField as keyof typeof b];
+      let aVal: string | number = a[sortField as keyof typeof a] as string | number;
+      let bVal: string | number = b[sortField as keyof typeof b] as string | number;
       
       if (typeof aVal === 'string') {
         aVal = aVal.toLowerCase();
