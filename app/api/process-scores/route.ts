@@ -105,8 +105,9 @@ export async function POST(request: NextRequest) {
           // Start with all players from initial ratings
           for (const [playerName, initialRating] of Object.entries(initialRatingsMap)) {
             // Check if player has rating from previous week
+            // Note: allUpdatedRatings uses uppercase PlayerName (set at line 159)
             const playerRating = allUpdatedRatings.find((r: any) => {
-              const rName = r.PlayerName || r.playerName || r.name;
+              const rName = r.PlayerName || r.playerName;
               return rName === playerName;
             });
             
