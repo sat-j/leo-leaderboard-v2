@@ -67,11 +67,15 @@ export async function POST(request: NextRequest) {
     };
 
     for (const player of players as any[]) {
-      const playerName = player.PlayerName || player.playerName;
-      if (!playerName) continue;
+      // readPlayersTab returns lowercase 'name' property
+      const playerName = player.name || player.PlayerName || player.playerName;
+      if (!playerName) {
+        console.log('⚠️ Skipping player with missing name:', player);
+        continue;
+      }
 
-      // Use initial rating based on level
-      const level = (player.Level || player.level || 'BEG') as string;
+      // readPlayersTab returns lowercase 'level' property
+      const level = (player.level || player.Level || 'BEG') as string;
       const initialRating = INITIAL_RATINGS[level as keyof typeof INITIAL_RATINGS] || INITIAL_RATINGS.BEG;
       
       initialRatingsMap[playerName] = new Rating(initialRating.mu, initialRating.sigma);
@@ -87,20 +91,43 @@ export async function POST(request: NextRequest) {
       console.log(`\n📅 Processing Week ${weekNumber}...`);
       
       // Get current ratings (either from previous week or initial)
-      let currentRatingsMap = { ...initialRatingsMap };
+      let currentRatingsMap: PlayerRatingMap = {};
       
-      if (weekNumber > 1 && allUpdatedRatings.length > 0) {
-        // Use previous week's ratings as starting point
-        for (const playerRating of allUpdatedRatings) {
-          const playerName = playerRating.PlayerName || playerRating.playerName;
-          if (!playerName) continue;
+      if (weekNumber === 1) {
+        // Week 1: Use initial ratings
+        currentRatingsMap = { ...initialRatingsMap };
+        console.log(`  ✅ Using initial ratings for Week 1 (${Object.keys(currentRatingsMap).length} players)`);
+      } else {
+        // Week 2+: Use previous week's final ratings as baseline
+        if (allUpdatedRatings.length > 0) {
+          console.log(`  ✅ Using Week ${weekNumber - 1} ratings as baseline`);
           
-          const prevMu = playerRating[`Week${weekNumber - 1}_Mu`];
-          const prevSigma = playerRating[`Week${weekNumber - 1}_Sigma`];
-          
-          if (prevMu !== undefined && prevSigma !== undefined) {
-            currentRatingsMap[playerName] = new Rating(prevMu, prevSigma);
+          // Start with all players from initial ratings
+          for (const [playerName, initialRating] of Object.entries(initialRatingsMap)) {
+            // Check if player has rating from previous week
+            const playerRating = allUpdatedRatings.find((r: any) => r.PlayerName === playerName);
+            
+            if (playerRating) {
+              const prevMu = playerRating[`Week${weekNumber - 1}_Mu`];
+              const prevSigma = playerRating[`Week${weekNumber - 1}_Sigma`];
+              
+              if (prevMu !== undefined && prevSigma !== undefined) {
+                currentRatingsMap[playerName] = new Rating(prevMu, prevSigma);
+              } else {
+                // Player didn't play in previous week, use their initial rating
+                currentRatingsMap[playerName] = initialRating;
+              }
+            } else {
+              // New player or no previous data, use initial rating
+              currentRatingsMap[playerName] = initialRating;
+            }
           }
+          
+          console.log(`  ✅ Loaded ratings for ${Object.keys(currentRatingsMap).length} players`);
+        } else {
+          // No previous ratings found, use initial
+          currentRatingsMap = { ...initialRatingsMap };
+          console.log(`  ⚠️ No previous ratings found, using initial ratings`);
         }
       }
 
@@ -118,7 +145,7 @@ export async function POST(request: NextRequest) {
       // Convert to array format for sheet writing
       const ratingsArray = Object.entries(updatedRatings).map(([playerName, rating]) => {
         const player = (players as any[]).find((p: any) => {
-          const pName = p.PlayerName || p.playerName;
+          const pName = p.name || p.PlayerName || p.playerName;
           return pName === playerName;
         });
         
@@ -130,7 +157,7 @@ export async function POST(request: NextRequest) {
         return {
           ...existingData,
           PlayerName: playerName,
-          CurrentLevel: player?.Level || player?.level || 'BEG',
+          CurrentLevel: player?.level || player?.Level || 'BEG',
           [`Week${weekNumber}_Mu`]: rating.mu,
           [`Week${weekNumber}_Sigma`]: rating.sigma,
         };
