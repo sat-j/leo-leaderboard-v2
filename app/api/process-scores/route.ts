@@ -105,7 +105,10 @@ export async function POST(request: NextRequest) {
           // Start with all players from initial ratings
           for (const [playerName, initialRating] of Object.entries(initialRatingsMap)) {
             // Check if player has rating from previous week
-            const playerRating = allUpdatedRatings.find((r: any) => r.PlayerName === playerName);
+            const playerRating = allUpdatedRatings.find((r: any) => {
+              const rName = r.PlayerName || r.playerName || r.name;
+              return rName === playerName;
+            });
             
             if (playerRating) {
               const prevMu = playerRating[`Week${weekNumber - 1}_Mu`];
