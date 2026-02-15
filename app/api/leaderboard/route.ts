@@ -131,23 +131,28 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Read matches (we need to read all matches for statistics)
+    // Read matches from all week tabs (w1, w2, w3, etc.)
     let allMatches: Match[] = [];
     try {
-      // Try to read from common tab names
-      // Consider storing the last used tab name in environment variables for production
-      const tabNames = ['Scores', 'scores', 'Week1', 'week1'];
-      for (const tabName of tabNames) {
+      // Read from all weeks up to current week
+      for (let week = 1; week <= currentWeek; week++) {
+        const tabName = `w${week}`;
         try {
-          allMatches = await readScoresTab(spreadsheetId, tabName);
-          if (allMatches.length > 0) break;
-        } catch {
-          continue;
+          const weekMatches = await readScoresTab(spreadsheetId, tabName);
+          if (weekMatches.length > 0) {
+            console.log(`✅ Loaded ${weekMatches.length} matches from ${tabName} tab`);
+            allMatches = [...allMatches, ...weekMatches];
+          }
+        } catch (error) {
+          console.warn(`⚠️ Could not read from ${tabName} tab:`, error);
+          // Continue to next week even if this one fails
         }
       }
-    } catch {
+      
+      console.log(`📊 Total matches loaded: ${allMatches.length} from ${currentWeek} week(s)`);
+    } catch (error) {
       // Could not read matches - continue without match data
-      console.warn('Could not read matches from any common tab names');
+      console.warn('Error reading matches:', error);
     }
 
     // Calculate statistics
