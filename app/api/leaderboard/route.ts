@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
       ? calculateRivalries(allMatches, currentWeek)
       : [];
 
-    const levelLeaderboards = getLevelLeaderboards(weekRatings, playerLevels, allMatches, currentWeek);
+    const levelLeaderboards = getLevelLeaderboards(weekRatings, previousWeekRatings, playerLevels, allMatches, currentWeek);
 
     const weekMatches = allMatches.filter(m => m.weekNumber === currentWeek);
 
