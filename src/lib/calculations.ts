@@ -154,9 +154,22 @@ export function calculateRivalries(matches: Match[], upToWeek: number): PlayerPa
 
 export function getLevelLeaderboards(
   ratings: Map<string, PlayerRating>,
-  players: Map<string, PlayerLevel>
+  players: Map<string, PlayerLevel>,
+  matches: Match[],
+  currentWeek: number
 ): { [key in PlayerLevel]?: PlayerRating[] } {
   const leaderboards: { [key in PlayerLevel]?: PlayerRating[] } = {};
+  
+  // Get players who played in the current week
+  const playersWhoPlayed = new Set<string>();
+  matches
+    .filter(m => m.weekNumber === currentWeek)
+    .forEach(match => {
+      playersWhoPlayed.add(match.player1);
+      playersWhoPlayed.add(match.player2);
+      playersWhoPlayed.add(match.player3);
+      playersWhoPlayed.add(match.player4);
+    });
   
   // Group players by level
   const levels: PlayerLevel[] = ['ADV', 'INT', 'PLUS', 'BEG'];
@@ -165,7 +178,7 @@ export function getLevelLeaderboards(
     const levelPlayers: PlayerRating[] = [];
     
     ratings.forEach((rating, playerName) => {
-      if (players.get(playerName) === level) {
+      if (players.get(playerName) === level && playersWhoPlayed.has(playerName)) {
         levelPlayers.push(rating);
       }
     });
