@@ -1,4 +1,4 @@
-import { Match, PlayerRating, TopPlayer, PlayerGameCount, PlayerWinRate, PlayerPair, RockstarPlayer, PlayerLevel } from '@/types';
+import { Match, PlayerRating, TopPlayer, PlayerGameCount, PlayerWinRate, PlayerPair, RockstarPlayer, PlayerLevel, PlayerWeekStat, PlayerOverallStat } from '@/types';
 
 export function calculateTopPlayersByGain(
   matches: Match[],
@@ -189,4 +189,184 @@ export function getLevelLeaderboards(
   });
   
   return leaderboards;
+}
+
+export function calculatePlayerWeekStats(
+  matches: Match[],
+  week: number,
+  currentRatings: Map<string, PlayerRating>,
+  previousRatings: Map<string, PlayerRating>,
+  playerLevels: Map<string, PlayerLevel>
+): PlayerWeekStat[] {
+  const weekMatches = matches.filter(m => m.weekNumber === week);
+  const playerStats = new Map<string, {
+    totalMatches: number;
+    matchesWon: number;
+    totalPointsScored: number;
+    totalPointsConceded: number;
+  }>();
+
+  // Initialize stats for all players in the week
+  weekMatches.forEach(match => {
+    [match.player1, match.player2, match.player3, match.player4].forEach(player => {
+      if (!playerStats.has(player)) {
+        playerStats.set(player, {
+          totalMatches: 0,
+          matchesWon: 0,
+          totalPointsScored: 0,
+          totalPointsConceded: 0
+        });
+      }
+    });
+  });
+
+  // Calculate stats from matches
+  weekMatches.forEach(match => {
+    const team1Won = match.score1 > match.score2;
+    
+    // Team 1 players
+    [match.player1, match.player2].forEach(player => {
+      const stats = playerStats.get(player)!;
+      stats.totalMatches += 1;
+      stats.totalPointsScored += match.score1;
+      stats.totalPointsConceded += match.score2;
+      if (team1Won) stats.matchesWon += 1;
+    });
+
+    // Team 2 players
+    [match.player3, match.player4].forEach(player => {
+      const stats = playerStats.get(player)!;
+      stats.totalMatches += 1;
+      stats.totalPointsScored += match.score2;
+      stats.totalPointsConceded += match.score1;
+      if (!team1Won) stats.matchesWon += 1;
+    });
+  });
+
+  // Convert to PlayerWeekStat array
+  const result: PlayerWeekStat[] = [];
+  playerStats.forEach((stats, playerName) => {
+    const currentRating = currentRatings.get(playerName);
+    const previousRating = previousRatings.get(playerName);
+    const level = playerLevels.get(playerName) || 'BEG';
+    
+    if (currentRating) {
+      // Calculate skill rating (mu - 3*sigma)
+      const skillRating = currentRating.mu - 3 * currentRating.sigma;
+      
+      // Calculate rating change
+      const ratingChange = previousRating 
+        ? currentRating.mu - previousRating.mu 
+        : 0;
+      
+      result.push({
+        playerName,
+        level,
+        skillRating,
+        totalMatches: stats.totalMatches,
+        matchesWon: stats.matchesWon,
+        winRate: stats.totalMatches > 0 ? (stats.matchesWon / stats.totalMatches) * 100 : 0,
+        totalPointsScored: stats.totalPointsScored,
+        pointsDifference: stats.totalPointsScored - stats.totalPointsConceded,
+        ratingChange
+      });
+    }
+  });
+
+  // Sort by skill rating descending
+  return result.sort((a, b) => b.skillRating - a.skillRating);
+}
+
+export function calculatePlayerOverallStats(
+  allMatches: Match[],
+  allWeekRatings: Map<number, Map<string, PlayerRating>>,
+  playerLevels: Map<string, PlayerLevel>
+): PlayerOverallStat[] {
+  // Get all unique players who have played
+  const allPlayers = new Set<string>();
+  allMatches.forEach(match => {
+    allPlayers.add(match.player1);
+    allPlayers.add(match.player2);
+    allPlayers.add(match.player3);
+    allPlayers.add(match.player4);
+  });
+
+  const result: PlayerOverallStat[] = [];
+
+  allPlayers.forEach(playerName => {
+    let totalMatches = 0;
+    let matchesWon = 0;
+    let totalPointsScored = 0;
+    let totalPointsConceded = 0;
+    const weeksPlayed = new Set<number>();
+
+    // Calculate stats across all matches
+    allMatches.forEach(match => {
+      const isInMatch = [match.player1, match.player2, match.player3, match.player4].includes(playerName);
+      if (!isInMatch) return;
+
+      weeksPlayed.add(match.weekNumber);
+      totalMatches += 1;
+
+      const team1Won = match.score1 > match.score2;
+      const isTeam1 = [match.player1, match.player2].includes(playerName);
+      
+      if (isTeam1) {
+        totalPointsScored += match.score1;
+        totalPointsConceded += match.score2;
+        if (team1Won) matchesWon += 1;
+      } else {
+        totalPointsScored += match.score2;
+        totalPointsConceded += match.score1;
+        if (!team1Won) matchesWon += 1;
+      }
+    });
+
+    // Get current rating (latest week)
+    const sortedWeeks = Array.from(allWeekRatings.keys()).sort((a, b) => b - a);
+    let currentRating: PlayerRating | undefined;
+    let initialRating: PlayerRating | undefined;
+    
+    for (const week of sortedWeeks) {
+      const weekRatings = allWeekRatings.get(week)!;
+      if (weekRatings.has(playerName)) {
+        currentRating = weekRatings.get(playerName);
+        break;
+      }
+    }
+
+    // Get initial rating (first week)
+    const sortedWeeksAsc = sortedWeeks.slice().reverse();
+    for (const week of sortedWeeksAsc) {
+      const weekRatings = allWeekRatings.get(week)!;
+      if (weekRatings.has(playerName)) {
+        initialRating = weekRatings.get(playerName);
+        break;
+      }
+    }
+
+    if (currentRating) {
+      const level = playerLevels.get(playerName) || 'BEG';
+      const currentSkillRating = currentRating.mu - 3 * currentRating.sigma;
+      const totalRatingChange = initialRating 
+        ? currentRating.mu - initialRating.mu 
+        : 0;
+
+      result.push({
+        playerName,
+        level,
+        currentRating: currentSkillRating,
+        totalMatches,
+        matchesWon,
+        winRate: totalMatches > 0 ? (matchesWon / totalMatches) * 100 : 0,
+        totalPointsScored,
+        pointsDifference: totalPointsScored - totalPointsConceded,
+        totalRatingChange,
+        weeksPlayed: weeksPlayed.size
+      });
+    }
+  });
+
+  // Sort by current rating descending
+  return result.sort((a, b) => b.currentRating - a.currentRating);
 }

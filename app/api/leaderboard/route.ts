@@ -7,7 +7,8 @@ import {
   calculateMostImproved,
   calculateCloseBuddies,
   calculateRivalries,
-  getLevelLeaderboards
+  getLevelLeaderboards,
+  calculatePlayerWeekStats
 } from '@/lib/calculations';
 import { Match, PlayerRating, PlayerLevel, LeaderboardData } from '@/types';
 
@@ -181,6 +182,11 @@ export async function GET(request: NextRequest) {
 
     const weekMatches = allMatches.filter(m => m.weekNumber === currentWeek);
 
+    // Calculate player week stats
+    const playerWeekStats = allMatches.length > 0
+      ? calculatePlayerWeekStats(allMatches, currentWeek, weekRatings, previousWeekRatings, playerLevels)
+      : [];
+
     const leaderboardData: LeaderboardData = {
       currentWeek,
       weekStats: {
@@ -194,7 +200,8 @@ export async function GET(request: NextRequest) {
       rockstars,
       closeBuddies,
       rivalries,
-      matches: weekMatches
+      matches: weekMatches,
+      playerWeekStats
     };
 
     return NextResponse.json({

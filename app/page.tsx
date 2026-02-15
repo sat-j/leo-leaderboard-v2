@@ -6,6 +6,7 @@ import StatsGrid from '@/components/StatsGrid';
 import LevelLeaderboards from '@/components/LevelLeaderboards';
 import FunStats from '@/components/FunStats';
 import GamesTable from '@/components/GamesTable';
+import PlayerStatsTable from '@/components/PlayerStatsTable';
 import { LeaderboardData } from '@/types';
 
 export default function Home() {
@@ -114,6 +115,15 @@ export default function Home() {
           closeBuddies={data.closeBuddies}
           rivalries={data.rivalries}
         />
+
+        {/* Player Statistics Table */}
+        {data.playerWeekStats && data.playerWeekStats.length > 0 && (
+          <PlayerStatsTable 
+            stats={data.playerWeekStats} 
+            title="Player Statistics" 
+            isOverall={false}
+          />
+        )}
 
         {/* Games Table */}
         <GamesTable matches={data.matches} />
