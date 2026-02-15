@@ -109,56 +109,15 @@ export async function readRatingsTab(spreadsheetId: string): Promise<any[]> {
 
 export async function writeRatingsTab(
   spreadsheetId: string,
-  ratingsData: any[]
+  sheetData: (string | number)[][]
 ): Promise<void> {
-  // Convert array of objects to 2D array format for sheets
-  if (ratingsData.length === 0) {
+  // Write 2D array data directly to the Ratings tab
+  if (sheetData.length === 0) {
     await updateSheetData(spreadsheetId, 'Ratings!A1', []);
     return;
   }
   
-  // Get all unique keys (headers) from all objects
-  const headersSet = new Set<string>();
-  ratingsData.forEach(obj => {
-    Object.keys(obj).forEach(key => headersSet.add(key));
-  });
-  
-  // Sort headers: PlayerName, CurrentLevel, then Week columns in order
-  const headers = Array.from(headersSet).sort((a, b) => {
-    if (a === 'PlayerName') return -1;
-    if (b === 'PlayerName') return 1;
-    if (a === 'CurrentLevel') return -1;
-    if (b === 'CurrentLevel') return 1;
-    
-    // Extract week numbers for Week*_Mu and Week*_Sigma columns
-    const weekRegex = /Week(\d+)_(Mu|Sigma)/;
-    const matchA = a.match(weekRegex);
-    const matchB = b.match(weekRegex);
-    
-    if (matchA && matchB) {
-      const weekA = parseInt(matchA[1]);
-      const weekB = parseInt(matchB[1]);
-      if (weekA !== weekB) return weekA - weekB;
-      // If same week, Mu comes before Sigma
-      return matchA[2] === 'Mu' ? -1 : 1;
-    }
-    
-    return a.localeCompare(b);
-  });
-  
-  // Build 2D array with headers as first row
-  const rows: (string | number)[][] = [headers];
-  
-  // Add data rows
-  ratingsData.forEach(obj => {
-    const row = headers.map(header => {
-      const value = obj[header];
-      return value !== undefined ? value : '';
-    });
-    rows.push(row);
-  });
-  
-  await updateSheetData(spreadsheetId, 'Ratings!A1', rows);
+  await updateSheetData(spreadsheetId, 'Ratings!A1', sheetData);
 }
 
 export async function clearRatingsTab(spreadsheetId: string): Promise<void> {

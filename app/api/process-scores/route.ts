@@ -150,9 +150,50 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Convert objects to 2D array for sheet writing
+      // Get all unique column names
+      const allColumns = new Set<string>();
+      for (const rating of allUpdatedRatings) {
+        Object.keys(rating).forEach(key => allColumns.add(key));
+      }
+
+      // Sort columns: PlayerName, CurrentLevel, then Week columns sorted
+      const sortedColumns = Array.from(allColumns).sort((a, b) => {
+        if (a === 'PlayerName') return -1;
+        if (b === 'PlayerName') return 1;
+        if (a === 'CurrentLevel') return -1;
+        if (b === 'CurrentLevel') return 1;
+        
+        // Extract week numbers for Week*_Mu and Week*_Sigma columns
+        const weekRegex = /Week(\d+)_(Mu|Sigma)/;
+        const matchA = a.match(weekRegex);
+        const matchB = b.match(weekRegex);
+        
+        if (matchA && matchB) {
+          const weekA = parseInt(matchA[1]);
+          const weekB = parseInt(matchB[1]);
+          if (weekA !== weekB) return weekA - weekB;
+          // If same week, Mu comes before Sigma
+          return matchA[2] === 'Mu' ? -1 : 1;
+        }
+        
+        return a.localeCompare(b);
+      });
+
+      // Create header row
+      const headerRow = sortedColumns;
+
+      // Create data rows
+      const dataRows = allUpdatedRatings.map((rating: any) => {
+        return sortedColumns.map(col => rating[col] ?? '');
+      });
+
+      // Combine header and data
+      const sheetData = [headerRow, ...dataRows];
+
       // Write to sheet
-      await writeRatingsTab(spreadsheetId, allUpdatedRatings);
-      console.log(`✅ Week ${weekNumber} written to Ratings tab`);
+      await writeRatingsTab(spreadsheetId, sheetData);
+      console.log(`✅ Week ${weekNumber} written to Ratings tab with ${sheetData.length - 1} players`);
     }
 
     return NextResponse.json({ 
