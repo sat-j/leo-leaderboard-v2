@@ -88,7 +88,12 @@ export async function readRatingsTab(spreadsheetId: string): Promise<any[]> {
         const value = row[index];
         // Convert numeric strings to numbers for Mu and Sigma columns
         if (header.endsWith('_Mu') || header.endsWith('_Sigma')) {
-          obj[header] = value !== undefined && value !== '' ? parseFloat(String(value)) : undefined;
+          if (value !== undefined && value !== '') {
+            const numValue = parseFloat(String(value));
+            obj[header] = !isNaN(numValue) ? numValue : undefined;
+          } else {
+            obj[header] = undefined;
+          }
         } else {
           obj[header] = value;
         }
