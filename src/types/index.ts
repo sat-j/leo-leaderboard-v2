@@ -67,6 +67,31 @@ export interface RockstarPlayer {
   improvement: number;
 }
 
+export interface PlayerWeekStat {
+  playerName: string;
+  level: PlayerLevel;
+  skillRating: number;
+  totalMatches: number;
+  matchesWon: number;
+  winRate: number;
+  totalPointsScored: number;
+  pointsDifference: number;
+  ratingChange: number;
+}
+
+export interface PlayerOverallStat {
+  playerName: string;
+  level: PlayerLevel;
+  currentRating: number;
+  totalMatches: number;
+  matchesWon: number;
+  winRate: number;
+  totalPointsScored: number;
+  pointsDifference: number;
+  totalRatingChange: number;
+  weeksPlayed: number;
+}
+
 export interface LeaderboardData {
   currentWeek: number;
   weekStats: WeekStats;
@@ -77,4 +102,5 @@ export interface LeaderboardData {
   closeBuddies: PlayerPair[];
   rivalries: PlayerPair[];
   matches: Match[];
+  playerWeekStats?: PlayerWeekStat[];
 }
