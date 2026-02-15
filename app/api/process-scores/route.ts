@@ -1,14 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readScoresTab, readPlayersTab, readRatingsTab, writeRatingsTab } from '@/lib/googleSheets';
 import { calculateWeekRatings } from '@/lib/trueskill';
-
-interface PlayerRating {
-  mu: number;
-  sigma: number;
-}
+import { Rating } from 'ts-trueskill';
 
 interface PlayerRatingMap {
-  [playerName: string]: PlayerRating;
+  [playerName: string]: Rating;
 }
 
 export async function POST(request: NextRequest) {
@@ -78,10 +74,7 @@ export async function POST(request: NextRequest) {
       const level = (player.Level || player.level || 'BEG') as string;
       const initialRating = INITIAL_RATINGS[level as keyof typeof INITIAL_RATINGS] || INITIAL_RATINGS.BEG;
       
-      initialRatingsMap[playerName] = {
-        mu: initialRating.mu,
-        sigma: initialRating.sigma
-      };
+      initialRatingsMap[playerName] = new Rating(initialRating.mu, initialRating.sigma);
     }
 
     console.log(`✅ Built initial ratings for ${Object.keys(initialRatingsMap).length} players`);
@@ -106,10 +99,7 @@ export async function POST(request: NextRequest) {
           const prevSigma = playerRating[`Week${weekNumber - 1}_Sigma`];
           
           if (prevMu !== undefined && prevSigma !== undefined) {
-            currentRatingsMap[playerName] = {
-              mu: prevMu,
-              sigma: prevSigma
-            };
+            currentRatingsMap[playerName] = new Rating(prevMu, prevSigma);
           }
         }
       }

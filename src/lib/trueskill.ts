@@ -1,13 +1,8 @@
-import { rating, rate, Rating } from 'ts-trueskill';
+import { rate, Rating } from 'ts-trueskill';
 import { Match, Player } from '@/types';
 
-interface PlayerRating {
-  mu: number;
-  sigma: number;
-}
-
 interface PlayerRatingMap {
-  [playerName: string]: PlayerRating;
+  [playerName: string]: Rating;
 }
 
 // TrueSkill configuration
@@ -93,12 +88,12 @@ export function calculateWeekRatings(
 
     // Get current ratings as TrueSkill Rating objects
     const team1 = [
-      rating(currentRatings[Player1].mu, currentRatings[Player1].sigma),
-      rating(currentRatings[Player2].mu, currentRatings[Player2].sigma)
+      new Rating(currentRatings[Player1].mu, currentRatings[Player1].sigma),
+      new Rating(currentRatings[Player2].mu, currentRatings[Player2].sigma)
     ];
     const team2 = [
-      rating(currentRatings[Player3].mu, currentRatings[Player3].sigma),
-      rating(currentRatings[Player4].mu, currentRatings[Player4].sigma)
+      new Rating(currentRatings[Player3].mu, currentRatings[Player3].sigma),
+      new Rating(currentRatings[Player4].mu, currentRatings[Player4].sigma)
     ];
 
     // Determine winner (ranks: [1, 2] means team1 wins, [2, 1] means team2 wins)
@@ -119,14 +114,14 @@ export function calculateWeekRatings(
       // Calculate new ratings
       const [[newR1, newR2], [newR3, newR4]] = rate(
         [team1, team2],
-        { ranks }
+        ranks
       );
 
-      // Update ratings in the map
-      currentRatings[Player1] = { mu: newR1.mu, sigma: newR1.sigma };
-      currentRatings[Player2] = { mu: newR2.mu, sigma: newR2.sigma };
-      currentRatings[Player3] = { mu: newR3.mu, sigma: newR3.sigma };
-      currentRatings[Player4] = { mu: newR4.mu, sigma: newR4.sigma };
+      // Update ratings in the map (Rating objects have mu and sigma properties)
+      currentRatings[Player1] = newR1;
+      currentRatings[Player2] = newR2;
+      currentRatings[Player3] = newR3;
+      currentRatings[Player4] = newR4;
 
     } catch (error) {
       console.error(`❌ Error calculating ratings for match ${matchCount}:`, error);
@@ -145,5 +140,5 @@ export function calculateWeekRatings(
   return currentRatings;
 }
 
-// Export the types so they can be used elsewhere
-export type { PlayerRating, PlayerRatingMap };
+// Export the type so it can be used elsewhere
+export type { PlayerRatingMap };
