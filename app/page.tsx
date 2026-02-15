@@ -15,12 +15,13 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLeaderboardData = async (week: number) => {
+  const fetchLeaderboardData = async (week?: number) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch(`/api/leaderboard?week=${week}`);
+      const url = week ? `/api/leaderboard?week=${week}` : '/api/leaderboard';
+      const response = await fetch(url);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -42,7 +43,7 @@ export default function Home() {
   useEffect(() => {
     // Fetch data only once on initial load
     // Week changes are handled by handleWeekChange
-    fetchLeaderboardData(1);
+    fetchLeaderboardData();
   }, []);
 
   const handleWeekChange = (newWeek: number) => {
