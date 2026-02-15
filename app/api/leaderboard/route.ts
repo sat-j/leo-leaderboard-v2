@@ -119,6 +119,22 @@ export async function GET(request: NextRequest) {
           });
         }
       });
+      
+      // Fill in missing previous ratings with initial ratings for players who played this week
+      weekRatings.forEach((currentRating, playerName) => {
+        if (!previousWeekRatings.has(playerName)) {
+          const player = players.find(p => p.name === playerName);
+          if (player) {
+            previousWeekRatings.set(playerName, {
+              playerName,
+              mu: player.initialMu,
+              sigma: player.initialSigma,
+              week: 0,
+              level: player.level
+            });
+          }
+        }
+      });
     } else {
       // Use initial ratings for week 1
       players.forEach(player => {
