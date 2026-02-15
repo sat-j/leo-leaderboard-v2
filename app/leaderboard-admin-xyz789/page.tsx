@@ -27,11 +27,10 @@ export default function AdminPage() {
       const response = await fetch('/api/process-scores', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          scoresTabName,
-          adminSecret
+          scoresTabName: scoresTabName
         }),
       });
 

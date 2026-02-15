@@ -1,82 +1,149 @@
-import { Rating, rate, TrueSkill } from 'ts-trueskill';
-import { Match, PlayerLevel } from '@/types';
+import { rating, rate, Rating } from 'ts-trueskill';
+import { Match, Player } from '@/types';
 
-export const TRUESKILL_CONFIG = {
+interface PlayerRating {
+  mu: number;
+  sigma: number;
+}
+
+interface PlayerRatingMap {
+  [playerName: string]: PlayerRating;
+}
+
+// TrueSkill configuration
+const TRUESKILL_CONFIG = {
   mu: 25,
   sigma: 8.33,
   beta: 4.17,
   tau: 0.083,
-  draw_probability: 0
 };
 
-export const INITIAL_RATINGS: { [key in PlayerLevel]: { mu: number; sigma: number } } = {
-  BEG: { mu: 10, sigma: 8.33 },
-  PLUS: { mu: 20, sigma: 8.33 },
-  INT: { mu: 25, sigma: 8.33 },
-  ADV: { mu: 35, sigma: 8.33 }
-};
-
-const trueskill = new TrueSkill(
-  TRUESKILL_CONFIG.mu,
-  TRUESKILL_CONFIG.sigma,
-  TRUESKILL_CONFIG.beta,
-  TRUESKILL_CONFIG.tau,
-  TRUESKILL_CONFIG.draw_probability
-);
-
-export interface PlayerRatingMap {
-  [playerName: string]: Rating;
-}
-
-export function initializePlayerRating(level: PlayerLevel): Rating {
-  const initial = INITIAL_RATINGS[level];
-  return trueskill.createRating(initial.mu, initial.sigma);
-}
-
-export function calculateMatchRatings(
-  match: Match,
-  currentRatings: PlayerRatingMap
-): PlayerRatingMap {
-  // Get current ratings for all players
-  const team1Player1Rating = currentRatings[match.player1];
-  const team1Player2Rating = currentRatings[match.player2];
-  const team2Player1Rating = currentRatings[match.player3];
-  const team2Player2Rating = currentRatings[match.player4];
-
-  // Determine winner (rank 0 = winner, rank 1 = loser)
-  const team1Rank = match.score1 > match.score2 ? 0 : 1;
-  const team2Rank = match.score1 > match.score2 ? 1 : 0;
-
-  // Rate the match - team ratings
-  const [[newTeam1Player1, newTeam1Player2], [newTeam2Player1, newTeam2Player2]] = rate([
-    [team1Player1Rating, team1Player2Rating],
-    [team2Player1Rating, team2Player2Rating]
-  ], [team1Rank, team2Rank]);
-
-  // Return updated ratings
-  return {
-    ...currentRatings,
-    [match.player1]: newTeam1Player1,
-    [match.player2]: newTeam1Player2,
-    [match.player3]: newTeam2Player1,
-    [match.player4]: newTeam2Player2
-  };
+// Helper function to normalize player names (trim whitespace, handle case)
+function normalizePlayerName(name: string): string {
+  return name.trim();
 }
 
 export function calculateWeekRatings(
   matches: Match[],
   initialRatings: PlayerRatingMap
 ): PlayerRatingMap {
-  let currentRatings = { ...initialRatings };
+  console.log(`\n🎯 Starting rating calculation`);
+  console.log(`📊 Initial ratings count: ${Object.keys(initialRatings).length}`);
+  console.log(`🏸 Matches to process: ${matches.length}`);
+
+  // Normalize all keys in initialRatings
+  const normalizedRatings: PlayerRatingMap = {};
+  for (const [playerName, rating] of Object.entries(initialRatings)) {
+    normalizedRatings[normalizePlayerName(playerName)] = rating;
+  }
+
+  let currentRatings = { ...normalizedRatings };
+
+  console.log('📋 Available players:', Object.keys(currentRatings).slice(0, 5).join(', '), '...');
+
+  // Process each match
+  let matchCount = 0;
+  let skippedMatches = 0;
   
-  // Process each match sequentially
   for (const match of matches) {
-    currentRatings = calculateMatchRatings(match, currentRatings);
+    matchCount++;
+    
+    // Normalize player names - handle both uppercase and lowercase property names
+    const Player1 = normalizePlayerName((match as any).Player1 || (match as any).player1);
+    const Player2 = normalizePlayerName((match as any).Player2 || (match as any).player2);
+    const Player3 = normalizePlayerName((match as any).Player3 || (match as any).player3);
+    const Player4 = normalizePlayerName((match as any).Player4 || (match as any).player4);
+
+    // Validate all players exist in ratings
+    const missingPlayers = [];
+    if (!currentRatings[Player1]) missingPlayers.push(Player1);
+    if (!currentRatings[Player2]) missingPlayers.push(Player2);
+    if (!currentRatings[Player3]) missingPlayers.push(Player3);
+    if (!currentRatings[Player4]) missingPlayers.push(Player4);
+
+    if (missingPlayers.length > 0) {
+      console.warn(`⚠️ Match ${matchCount}: Skipping - Players not found in Players tab:`, missingPlayers);
+      console.warn(`   Available players start with:`, Object.keys(currentRatings).slice(0, 3));
+      skippedMatches++;
+      continue;
+    }
+
+    // Validate ratings have required properties
+    const playersToCheck = [Player1, Player2, Player3, Player4];
+    let hasError = false;
+    
+    for (const playerName of playersToCheck) {
+      const playerRating = currentRatings[playerName];
+      if (!playerRating) {
+        console.error(`❌ Player ${playerName} has no rating`);
+        hasError = true;
+        break;
+      }
+      if (playerRating.mu === undefined || playerRating.sigma === undefined) {
+        console.error(`❌ Player ${playerName} rating is incomplete:`, playerRating);
+        hasError = true;
+        break;
+      }
+    }
+
+    if (hasError) {
+      skippedMatches++;
+      continue;
+    }
+
+    // Get current ratings as TrueSkill Rating objects
+    const team1 = [
+      rating(currentRatings[Player1].mu, currentRatings[Player1].sigma),
+      rating(currentRatings[Player2].mu, currentRatings[Player2].sigma)
+    ];
+    const team2 = [
+      rating(currentRatings[Player3].mu, currentRatings[Player3].sigma),
+      rating(currentRatings[Player4].mu, currentRatings[Player4].sigma)
+    ];
+
+    // Determine winner (ranks: [1, 2] means team1 wins, [2, 1] means team2 wins)
+    const score1 = parseInt(String((match as any).Score1 || (match as any).score1));
+    const score2 = parseInt(String((match as any).Score2 || (match as any).score2));
+    
+    if (isNaN(score1) || isNaN(score2)) {
+      console.warn(`⚠️ Match ${matchCount}: Invalid scores (${(match as any).Score1}, ${(match as any).Score2})`);
+      skippedMatches++;
+      continue;
+    }
+
+    const ranks = score1 > score2 ? [1, 2] : [2, 1];
+
+    console.log(`🏸 Match ${matchCount}: ${Player1}/${Player2} (${score1}) vs ${Player3}/${Player4} (${score2}) - Winner: Team ${ranks[0] === 1 ? 1 : 2}`);
+
+    try {
+      // Calculate new ratings
+      const [[newR1, newR2], [newR3, newR4]] = rate(
+        [team1, team2],
+        { ranks }
+      );
+
+      // Update ratings in the map
+      currentRatings[Player1] = { mu: newR1.mu, sigma: newR1.sigma };
+      currentRatings[Player2] = { mu: newR2.mu, sigma: newR2.sigma };
+      currentRatings[Player3] = { mu: newR3.mu, sigma: newR3.sigma };
+      currentRatings[Player4] = { mu: newR4.mu, sigma: newR4.sigma };
+
+    } catch (error) {
+      console.error(`❌ Error calculating ratings for match ${matchCount}:`, error);
+      console.error('Match data:', match);
+      console.error('Team1 ratings:', team1);
+      console.error('Team2 ratings:', team2);
+      skippedMatches++;
+    }
+  }
+
+  console.log(`✅ Processed ${matchCount - skippedMatches} matches successfully`);
+  if (skippedMatches > 0) {
+    console.warn(`⚠️ Skipped ${skippedMatches} matches due to missing players or errors`);
   }
   
   return currentRatings;
 }
 
-export function createRating(mu: number, sigma: number): Rating {
-  return trueskill.createRating(mu, sigma);
-}
+// Export the types so they can be used elsewhere
+export type { PlayerRating, PlayerRatingMap };
