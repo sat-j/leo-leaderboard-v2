@@ -22,6 +22,13 @@ const LEVEL_NAMES = {
   BEG: 'Beginner'
 };
 
+function getRatingGainColorClass(ratingGain: number | undefined): string {
+  if (ratingGain === undefined) return 'text-gray-600';
+  if (ratingGain > 0) return 'text-green-600';
+  if (ratingGain < 0) return 'text-red-600';
+  return 'text-gray-600';
+}
+
 export default function LevelLeaderboards({ levelLeaderboards }: LevelLeaderboardsProps) {
   // Only showing ADV, INT, and PLUS levels in the main view
   // BEG level can be added if needed
@@ -49,8 +56,10 @@ export default function LevelLeaderboards({ levelLeaderboards }: LevelLeaderboar
                       <span className="font-medium text-gray-700">
                         {idx + 1}. {player.playerName}
                       </span>
-                      <span className="text-gray-600 font-semibold">
-                        {player.mu.toFixed(1)}
+                      <span className={`font-semibold ${getRatingGainColorClass(player.ratingGain)}`}>
+                        {player.ratingGain !== undefined 
+                          ? `${player.ratingGain >= 0 ? '+' : ''}${player.ratingGain.toFixed(1)}`
+                          : player.mu.toFixed(1)}
                       </span>
                     </div>
                   ))

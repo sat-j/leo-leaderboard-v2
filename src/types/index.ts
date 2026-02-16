@@ -28,6 +28,7 @@ export interface PlayerRating extends Rating {
   playerName: string;
   week: number;
   level: PlayerLevel;
+  ratingGain?: number;
 }
 
 export interface WeekStats {

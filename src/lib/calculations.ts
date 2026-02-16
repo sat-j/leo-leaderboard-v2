@@ -180,7 +180,13 @@ export function getLevelLeaderboards(
     
     ratings.forEach((rating, playerName) => {
       if (players.get(playerName) === level && playersWhoPlayed.has(playerName)) {
-        levelPlayers.push(rating);
+        const prevRating = previousRatings.get(playerName);
+        const ratingGain = prevRating ? rating.mu - prevRating.mu : undefined;
+        
+        levelPlayers.push({
+          ...rating,
+          ratingGain
+        });
       }
     });
     
