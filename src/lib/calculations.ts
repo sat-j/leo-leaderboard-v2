@@ -181,7 +181,7 @@ export function getLevelLeaderboards(
     ratings.forEach((rating, playerName) => {
       if (players.get(playerName) === level && playersWhoPlayed.has(playerName)) {
         const prevRating = previousRatings.get(playerName);
-        const ratingGain = prevRating ? rating.mu - prevRating.mu : 0;
+        const ratingGain = prevRating ? rating.mu - prevRating.mu : undefined;
         
         levelPlayers.push({
           ...rating,
