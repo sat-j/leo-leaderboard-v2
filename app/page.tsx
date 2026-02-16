@@ -91,7 +91,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-            🏸 Badminton Club Leaderboard
+            Leo Badminton Club - Leaderboard
           </h1>
           <p className="text-electric-200">Track your progress and compete with your club!</p>
         </div>
