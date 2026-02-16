@@ -49,8 +49,10 @@ export default function LevelLeaderboards({ levelLeaderboards }: LevelLeaderboar
                       <span className="font-medium text-gray-700">
                         {idx + 1}. {player.playerName}
                       </span>
-                      <span className="text-gray-600 font-semibold">
-                        {player.mu.toFixed(1)}
+                      <span className={`font-semibold ${player.ratingGain && player.ratingGain > 0 ? 'text-green-600' : player.ratingGain && player.ratingGain < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                        {player.ratingGain !== undefined 
+                          ? `${player.ratingGain >= 0 ? '+' : ''}${player.ratingGain.toFixed(1)}`
+                          : player.mu.toFixed(1)}
                       </span>
                     </div>
                   ))
