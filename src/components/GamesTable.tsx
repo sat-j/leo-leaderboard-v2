@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Match } from '@/types';
 
@@ -8,6 +9,8 @@ interface GamesTableProps {
 }
 
 export default function GamesTable({ matches }: GamesTableProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
   if (matches.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
@@ -17,9 +20,35 @@ export default function GamesTable({ matches }: GamesTableProps) {
     );
   }
 
+  // Filter matches based on search query
+  const filteredMatches = matches.filter(match => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      match.player1.toLowerCase().includes(query) ||
+      match.player2.toLowerCase().includes(query) ||
+      match.player3.toLowerCase().includes(query) ||
+      match.player4.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Matches</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">Matches</h2>
+        
+        {/* Search Input */}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <label className="text-sm font-medium text-gray-700">Search:</label>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Player name..."
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-electric-500 w-full sm:w-48"
+          />
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -30,47 +59,40 @@ export default function GamesTable({ matches }: GamesTableProps) {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Team 1
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Score
-              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Team 2
               </th>
               <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Score
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Winner
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {matches.map((match, idx) => {
+            {filteredMatches.map((match, idx) => {
               const team1Won = match.score1 > match.score2;
+              const originalIndex = matches.indexOf(match);
               
               return (
                 <tr key={idx} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {idx + 1}
+                    {originalIndex + 1}
                   </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
-                    {match.player1} & {match.player2}
+                  <td className={`px-6 py-4 text-sm ${team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
+                    <div className="flex flex-col">
+                      <span>{match.player1}</span>
+                      <span>{match.player2}</span>
+                    </div>
                   </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-center ${team1Won ? 'font-bold text-green-700' : 'text-gray-600'}`}>
-                    {match.score1}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm ${!team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
-                    {match.player3} & {match.player4}
-                  </td>
-                  <td className={`px-6 py-4 whitespace-nowrap text-sm text-center ${!team1Won ? 'font-bold text-green-700' : 'text-gray-600'}`}>
-                    {match.score2}
+                  <td className={`px-6 py-4 text-sm ${!team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
+                    <div className="flex flex-col">
+                      <span>{match.player3}</span>
+                      <span>{match.player4}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    {team1Won ? (
-                      <div title="Winner">
-                        <CheckCircle className="w-5 h-5 text-green-600 mx-auto" />
-                      </div>
-                    ) : null}
+                    <span className={team1Won ? 'font-bold text-green-700' : 'text-gray-600'}>{match.score1}</span>
+                    <span className="text-gray-500"> - </span>
+                    <span className={!team1Won ? 'font-bold text-green-700' : 'text-gray-600'}>{match.score2}</span>
                   </td>
                 </tr>
               );
@@ -78,6 +100,10 @@ export default function GamesTable({ matches }: GamesTableProps) {
           </tbody>
         </table>
       </div>
+      
+      {filteredMatches.length === 0 && searchQuery.trim() && (
+        <p className="text-center text-gray-500 py-4">No matches found for "{searchQuery}"</p>
+      )}
     </div>
   );
 }
