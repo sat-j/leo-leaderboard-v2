@@ -80,13 +80,13 @@ export default function GamesTable({ matches }: GamesTableProps) {
                   </td>
                   <td className={`px-6 py-4 text-sm ${team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
                     <div className="flex flex-col">
-                      <span>{match.player1}</span>
+                      <span>{match.player1} / </span>
                       <span>{match.player2}</span>
                     </div>
                   </td>
                   <td className={`px-6 py-4 text-sm ${!team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
                     <div className="flex flex-col">
-                      <span>{match.player3}</span>
+                      <span>{match.player3} / </span>
                       <span>{match.player4}</span>
                     </div>
                   </td>
