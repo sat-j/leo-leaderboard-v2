@@ -21,16 +21,18 @@ export default function GamesTable({ matches }: GamesTableProps) {
   }
 
   // Filter matches based on search query
-  const filteredMatches = matches.filter(match => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      match.player1.toLowerCase().includes(query) ||
-      match.player2.toLowerCase().includes(query) ||
-      match.player3.toLowerCase().includes(query) ||
-      match.player4.toLowerCase().includes(query)
-    );
-  });
+  const filteredMatches = matches
+    .map((match, index) => ({ match, originalIndex: index }))
+    .filter(({ match }) => {
+      if (!searchQuery.trim()) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        match.player1.toLowerCase().includes(query) ||
+        match.player2.toLowerCase().includes(query) ||
+        match.player3.toLowerCase().includes(query) ||
+        match.player4.toLowerCase().includes(query)
+      );
+    });
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -68,12 +70,11 @@ export default function GamesTable({ matches }: GamesTableProps) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredMatches.map((match, idx) => {
+            {filteredMatches.map(({ match, originalIndex }) => {
               const team1Won = match.score1 > match.score2;
-              const originalIndex = matches.indexOf(match);
               
               return (
-                <tr key={idx} className="hover:bg-gray-50">
+                <tr key={originalIndex} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {originalIndex + 1}
                   </td>
