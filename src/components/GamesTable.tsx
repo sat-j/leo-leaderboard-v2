@@ -55,8 +55,8 @@ export default function GamesTable({ matches }: GamesTableProps) {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Match #
+              <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                #
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Team 1
@@ -75,22 +75,22 @@ export default function GamesTable({ matches }: GamesTableProps) {
               
               return (
                 <tr key={originalIndex} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="whitespace-nowrap text-sm text-gray-900">
                     {originalIndex + 1}
                   </td>
-                  <td className={`px-6 py-4 text-sm ${team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
+                  <td className={`px-1 py-3 text-xs ${team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
                     <div className="flex flex-col">
                       <span>{match.player1} / </span>
                       <span>{match.player2}</span>
                     </div>
                   </td>
-                  <td className={`px-6 py-4 text-sm ${!team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
+                  <td className={`px-1 py-3 text-xs ${!team1Won ? 'font-semibold text-green-700' : 'text-gray-700'}`}>
                     <div className="flex flex-col">
                       <span>{match.player3} / </span>
                       <span>{match.player4}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                  <td className="px-1 py-3 whitespace-nowrap text-xs text-center">
                     <span className={team1Won ? 'font-bold text-green-700' : 'text-gray-600'}>{match.score1}</span>
                     <span className="text-gray-500"> - </span>
                     <span className={!team1Won ? 'font-bold text-green-700' : 'text-gray-600'}>{match.score2}</span>
