@@ -17,6 +17,7 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
   const [sortField, setSortField] = useState<SortField>(isOverall ? 'currentRating' : 'skillRating');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [levelFilter, setLevelFilter] = useState<PlayerLevel | 'ALL'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -35,6 +36,14 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
       filtered = filtered.filter(stat => stat.level === levelFilter);
     }
 
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(stat => 
+        stat.playerName.toLowerCase().includes(query)
+      );
+    }
+
     // Apply sorting
     filtered.sort((a, b) => {
       let aVal: string | number = a[sortField as keyof typeof a] as string | number;
@@ -51,7 +60,7 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
     });
 
     return filtered;
-  }, [stats, sortField, sortOrder, levelFilter]);
+  }, [stats, sortField, sortOrder, levelFilter, searchQuery]);
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
@@ -83,20 +92,34 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
         <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
         
-        {/* Level Filter */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">Filter by Level:</label>
-          <select
-            value={levelFilter}
-            onChange={(e) => setLevelFilter(e.target.value as PlayerLevel | 'ALL')}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-electric-500"
-          >
-            <option value="ALL">All Levels</option>
-            <option value="ADV">ADV</option>
-            <option value="PLUS">PLUS</option>
-            <option value="INT">INT</option>
-            <option value="BEG">BEG</option>
-          </select>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+          {/* Search Input */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <label className="text-sm font-medium text-gray-700">Search:</label>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Player name..."
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-electric-500 w-full sm:w-48"
+            />
+          </div>
+
+          {/* Level Filter */}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Filter by Level:</label>
+            <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value as PlayerLevel | 'ALL')}
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-electric-500"
+            >
+              <option value="ALL">All Levels</option>
+              <option value="ADV">ADV</option>
+              <option value="PLUS">PLUS</option>
+              <option value="INT">INT</option>
+              <option value="BEG">BEG</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -129,6 +152,15 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
                 <div className="flex items-center">
                   {isOverall ? 'Current Rating' : 'Skill Rating'}
                   <SortIcon field={isOverall ? 'currentRating' : 'skillRating'} />
+                </div>
+              </th>
+              <th 
+                onClick={() => handleSort(isOverall ? 'totalRatingChange' : 'ratingChange')}
+                className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+              >
+                <div className="flex items-center justify-center">
+                  Rating Change
+                  <SortIcon field={isOverall ? 'totalRatingChange' : 'ratingChange'} />
                 </div>
               </th>
               <th 
@@ -176,15 +208,6 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
                   <SortIcon field="pointsDifference" />
                 </div>
               </th>
-              <th 
-                onClick={() => handleSort(isOverall ? 'totalRatingChange' : 'ratingChange')}
-                className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-              >
-                <div className="flex items-center justify-center">
-                  Rating Change
-                  <SortIcon field={isOverall ? 'totalRatingChange' : 'ratingChange'} />
-                </div>
-              </th>
               {isOverall && (
                 <th 
                   onClick={() => handleSort('weeksPlayed')}
@@ -222,6 +245,9 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
                     {rating.toFixed(2)}
                   </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                    {formatRatingChange(ratingChange)}
+                  </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-700">
                     {stat.totalMatches}
                   </td>
@@ -236,9 +262,6 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-700">
                     {stat.pointsDifference > 0 ? '+' : ''}{stat.pointsDifference}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
-                    {formatRatingChange(ratingChange)}
                   </td>
                   {isOverall && (
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-700">
