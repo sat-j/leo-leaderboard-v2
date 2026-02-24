@@ -3,7 +3,7 @@ import { readPlayersTab, readScoresTab, readRatingsTab } from '@/lib/googleSheet
 import { calculatePlayerAnalytics } from '@/lib/playerAnalytics';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ playerName: string }> }
 ) {
   try {
@@ -25,9 +25,15 @@ export async function GET(
     const weekColumns = headers.filter((h: string) => h.includes('Week') && h.includes('_Mu'));
     const maxWeek = weekColumns.length;
 
-    // Read all matches
+    // Parse optional week filter from query string
+    const url = new URL(request.url);
+    const weekParam = url.searchParams.get('week');
+    const selectedWeek = weekParam ? parseInt(weekParam, 10) : null;
+
+    // Read all matches (or just the selected week's matches)
     let allMatches: import('@/types').Match[] = [];
     for (let week = 1; week <= maxWeek; week++) {
+      if (selectedWeek !== null && week !== selectedWeek) continue;
       try {
         const weekMatches = await readScoresTab(spreadsheetId, `w${week}`);
         allMatches = [...allMatches, ...weekMatches];
@@ -47,7 +53,7 @@ export async function GET(
 
     const analytics = calculatePlayerAnalytics(playerName, allMatches);
 
-    return NextResponse.json({ analytics, playerNames });
+    return NextResponse.json({ analytics, playerNames, maxWeek, selectedWeek });
   } catch (error) {
     console.error('Error fetching player stats:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

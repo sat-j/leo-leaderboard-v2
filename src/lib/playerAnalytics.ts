@@ -4,6 +4,7 @@ export interface PartnershipStat {
   partner: string;
   wins: number;
   losses: number;
+  totalMatches: number;
   winRate: number;
   verdict: string;
 }
@@ -111,6 +112,7 @@ export function calculatePlayerAnalytics(playerName: string, allMatches: Match[]
       partner,
       wins: stat.wins,
       losses: stat.losses,
+      totalMatches: stat.wins + stat.losses,
       winRate: stat.wins + stat.losses > 0 ? (stat.wins / (stat.wins + stat.losses)) * 100 : 0,
       verdict: getPartnershipVerdict(stat.wins, stat.losses),
     }))
