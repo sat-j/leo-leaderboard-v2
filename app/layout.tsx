@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import NavPlayerStats from '@/components/NavPlayerStats';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({
             <Link href="/" className="text-white font-bold text-xl hover:text-coral-400 transition-colors">
               🏸 Badminton Leaderboard
             </Link>
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
               <Link 
                 href="/" 
                 className="text-white hover:text-coral-400 transition-colors px-3 py-2"
@@ -33,6 +34,7 @@ export default function RootLayout({
               >
                 Overall
               </Link>
+              <NavPlayerStats />
             </div>
           </div>
         </nav>
