@@ -4,9 +4,21 @@ import { PlayerAnalytics, PartnershipStat, OpponentStat } from '@/lib/playerAnal
 
 interface Props {
   analytics: PlayerAnalytics;
+  isOverall: boolean;
 }
 
-export default function PlayerStatsReport({ analytics }: Props) {
+function filterPartnerships(partnerships: PartnershipStat[], isOverall: boolean): PartnershipStat[] {
+  if (!isOverall) {
+    return partnerships;
+  }
+  const filtered = partnerships.filter(p => p.totalMatches >= 3);
+  if (filtered.length < 3) {
+    return partnerships;
+  }
+  return filtered;
+}
+
+export default function PlayerStatsReport({ analytics, isOverall }: Props) {
   const {
     playerName,
     totalMatches,
@@ -39,13 +51,16 @@ export default function PlayerStatsReport({ analytics }: Props) {
   const weaknessNames = new Set(weaknesses.map(w => w.opponent));
   const rivalries = [...bunnyNames].filter(n => weaknessNames.has(n));
 
+  // Apply partnership filtering based on overall vs weekly view
+  const filteredPartnerships = filterPartnerships(partnerships, isOverall);
+
   // Best partners: positive records sorted by win rate then wins
-  const bestPartners: PartnershipStat[] = partnerships
+  const bestPartners: PartnershipStat[] = filteredPartnerships
     .filter(p => p.wins > p.losses || (p.wins >= 2 && p.losses === 0))
     .slice(0, 5);
 
   // Worst partners: 0 wins with losses
-  const worstPartners: PartnershipStat[] = [...partnerships]
+  const worstPartners: PartnershipStat[] = [...filteredPartnerships]
     .filter(p => p.wins === 0 && p.losses > 0)
     .sort((a, b) => b.losses - a.losses)
     .slice(0, 5);
@@ -61,11 +76,13 @@ export default function PlayerStatsReport({ analytics }: Props) {
   const achilles = weaknesses[0]?.opponent;
   const avoidPartner = worstPartners[0]?.partner;
 
+  const performanceTitle = isOverall ? '📊 Overall Performance' : '📊 Performance This Week';
+
   return (
     <div className="space-y-8">
       {/* Overall Performance */}
       <section className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">📊 Overall Performance</h2>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">{performanceTitle}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div className="bg-electric-50 rounded-lg p-4 text-center">
             <p className="text-3xl font-bold text-electric-600">{winRate.toFixed(1)}%</p>
@@ -90,6 +107,27 @@ export default function PlayerStatsReport({ analytics }: Props) {
             {winRateDiffStr}
           </strong>{' '}
           vs overall average.
+        </p>
+      </section>
+
+      {/* Summary */}
+      <section className="bg-gradient-to-r from-electric-800 to-electric-600 rounded-xl shadow p-6 text-white">
+        <h2 className="text-2xl font-bold mb-3">🎯 Summary</h2>
+        <p className="leading-relaxed text-electric-100">
+          <strong className="text-white">{playerName}</strong> is a <strong className="text-coral-400">{tier}</strong> with a win rate of{' '}
+          <strong className="text-coral-400">{winRate.toFixed(1)}%</strong> across {totalMatches} matches{!isOverall ? ' this week' : ''}.{' '}
+          {dreamPartner && (
+            <>🔥 Best played with <strong className="text-coral-400">{dreamPartner}</strong>. </>
+          )}
+          {topBunny && (
+            <>🎯 Dominates <strong className="text-coral-400">{topBunny}</strong> most. </>
+          )}
+          {achilles && (
+            <>⚠️ Achilles heel: <strong className="text-coral-400">{achilles}</strong>. </>
+          )}
+          {avoidPartner && (
+            <>❌ Avoid partnering with <strong className="text-coral-400">{avoidPartner}</strong>.</>
+          )}
         </p>
       </section>
 
@@ -246,27 +284,6 @@ export default function PlayerStatsReport({ analytics }: Props) {
             )}
           </>
         )}
-      </section>
-
-      {/* Summary */}
-      <section className="bg-gradient-to-r from-electric-800 to-electric-600 rounded-xl shadow p-6 text-white">
-        <h2 className="text-2xl font-bold mb-3">🎯 Summary</h2>
-        <p className="leading-relaxed text-electric-100">
-          <strong className="text-white">{playerName}</strong> is a <strong className="text-coral-400">{tier}</strong> with a win rate of{' '}
-          <strong className="text-coral-400">{winRate.toFixed(1)}%</strong> across {totalMatches} matches.{' '}
-          {dreamPartner && (
-            <>🔥 Best played with <strong className="text-coral-400">{dreamPartner}</strong>. </>
-          )}
-          {topBunny && (
-            <>🎯 Dominates <strong className="text-coral-400">{topBunny}</strong> most. </>
-          )}
-          {achilles && (
-            <>⚠️ Achilles heel: <strong className="text-coral-400">{achilles}</strong>. </>
-          )}
-          {avoidPartner && (
-            <>❌ Avoid partnering with <strong className="text-coral-400">{avoidPartner}</strong>.</>
-          )}
-        </p>
       </section>
     </div>
   );
