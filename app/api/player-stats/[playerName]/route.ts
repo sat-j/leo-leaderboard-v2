@@ -4,7 +4,7 @@ import { calculatePlayerAnalytics } from '@/lib/playerAnalytics';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { playerName: string } }
+  { params }: { params: Promise<{ playerName: string }> }
 ) {
   try {
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
@@ -12,7 +12,8 @@ export async function GET(
       return NextResponse.json({ error: 'Google Sheet ID not configured' }, { status: 500 });
     }
 
-    const playerName = decodeURIComponent(params.playerName);
+    const { playerName: encodedPlayerName } = await params;
+    const playerName = decodeURIComponent(encodedPlayerName);
 
     // Read ratings to determine max week
     const ratingsData = await readRatingsTab(spreadsheetId);
