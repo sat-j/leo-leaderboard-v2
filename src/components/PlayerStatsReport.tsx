@@ -68,8 +68,8 @@ export default function PlayerStatsReport({ analytics, isOverall }: Props) {
   // Summary
   let tier = 'solid performer';
   if (winRate >= 70) tier = 'top-tier player';
-  else if (winRate >= 55) tier = 'strong performer';
-  else if (winRate < 40) tier = 'developing player';
+  else if (winRate >= 50) tier = 'strong performer';
+  else if (winRate < 30) tier = 'developing player';
 
   const dreamPartner = bestPartners[0]?.partner;
   const topBunny = bunnies[0]?.opponent;
@@ -126,7 +126,7 @@ export default function PlayerStatsReport({ analytics, isOverall }: Props) {
             <>⚠️ Achilles heel: <strong className="text-coral-400">{achilles}</strong>. </>
           )}
           {avoidPartner && (
-            <>❌ Avoid partnering with <strong className="text-coral-400">{avoidPartner}</strong>.</>
+            <>👀 Need to sync better with <strong className="text-coral-400">{avoidPartner}</strong>.</>
           )}
         </p>
       </section>
@@ -279,7 +279,7 @@ export default function PlayerStatsReport({ analytics, isOverall }: Props) {
             </div>
             {avoidPartner && (
               <p className="mt-3 text-gray-700 text-sm">
-                👀 Avoid pairing with <strong>{avoidPartner}</strong> — chemistry just isn&apos;t there ({worstPartners[0].losses} losses together).
+                👀 Need to sync better with <strong>{avoidPartner}</strong> — chemistry just isn&apos;t there ({worstPartners[0].losses} losses together).
               </p>
             )}
           </>

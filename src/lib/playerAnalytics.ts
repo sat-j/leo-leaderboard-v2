@@ -30,8 +30,8 @@ function getPartnershipVerdict(wins: number, losses: number): string {
   if (wins >= 5 && losses === 0) return '🔥 Unbeatable combo!';
   if (wins >= 4 && losses <= 1) return '💪 Very strong pair';
   if (wins >= 2 && losses === 0) return '✅ Solid';
-  if (wins === 0 && losses >= 3) return '👀 Avoid this combo!';
-  if (wins === 0 && losses >= 1) return '❌ Poor';
+  if (wins === 0 && losses >= 3) return '👀 Needs more sync.';
+  if (wins === 0 && losses >= 1) return '👀 Dont lose hope!';
   return '';
 }
 
