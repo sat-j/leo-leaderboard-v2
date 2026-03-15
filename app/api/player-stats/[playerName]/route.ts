@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { readPlayersTab, readScoresTab, readRatingsTab } from '@/lib/googleSheets';
 import { calculatePlayerAnalytics } from '@/lib/playerAnalytics';
+import { getSpreadsheetId } from '@/lib/config';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ playerName: string }> }
 ) {
   try {
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const spreadsheetId = getSpreadsheetId();
     if (!spreadsheetId) {
       return NextResponse.json({ error: 'Google Sheet ID not configured' }, { status: 500 });
     }

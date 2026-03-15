@@ -1,179 +1,229 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'node:crypto';
+import { Rating } from 'ts-trueskill';
 import { readScoresTab, readPlayersTab, readRatingsTab, writeRatingsTab } from '@/lib/googleSheets';
 import { calculateWeekRatings } from '@/lib/trueskill';
-import { Rating } from 'ts-trueskill';
+import { getAdminSecret, getRequiredSpreadsheetId } from '@/lib/config';
 
 interface PlayerRatingMap {
   [playerName: string]: Rating;
 }
 
+interface ProcessingWarning {
+  code: 'MISSING_PLAYER_NAME' | 'INVALID_WEEK_NUMBER' | 'DUPLICATE_PLAYER_IN_MATCH' | 'TIED_SCORE';
+  message: string;
+  weekNumber?: number;
+  rowNumber?: number;
+}
+
+const INITIAL_RATINGS = {
+  BEG: { mu: 10, sigma: 8.33 },
+  PLUS: { mu: 20, sigma: 8.33 },
+  INT: { mu: 25, sigma: 8.33 },
+  ADV: { mu: 35, sigma: 8.33 },
+} as const;
+
+function secretsMatch(expected: string, actual: string): boolean {
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(actual);
+
+  if (expectedBuffer.length !== actualBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expectedBuffer, actualBuffer);
+}
+
+function getLatestKnownRating(playerRating: Record<string, unknown>, weekNumber: number): Rating | null {
+  for (let previousWeek = weekNumber - 1; previousWeek >= 1; previousWeek--) {
+    const prevMu = playerRating[`Week${previousWeek}_Mu`];
+    const prevSigma = playerRating[`Week${previousWeek}_Sigma`];
+
+    if (typeof prevMu === 'number' && typeof prevSigma === 'number') {
+      return new Rating(prevMu, prevSigma);
+    }
+  }
+
+  return null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { scoresTabName } = body;
+    const { adminSecret, scoresTabName } = body as {
+      adminSecret?: string;
+      scoresTabName?: string;
+    };
+
+    const expectedSecret = getAdminSecret();
+    if (!expectedSecret) {
+      return NextResponse.json({ error: 'Admin secret not configured' }, { status: 500 });
+    }
+
+    if (typeof adminSecret !== 'string' || !secretsMatch(expectedSecret, adminSecret)) {
+      return NextResponse.json({ error: 'Invalid admin secret' }, { status: 401 });
+    }
 
     if (!scoresTabName) {
       return NextResponse.json({ error: 'Scores tab name is required' }, { status: 400 });
     }
 
-    // Get spreadsheet ID from environment
-    const spreadsheetId = process.env.GOOGLE_SHEETS_ID;
-    
-    if (!spreadsheetId) {
-      return NextResponse.json({ 
-        error: 'Google Sheets ID not configured. Add GOOGLE_SHEETS_ID to .env.local' 
-      }, { status: 500 });
-    }
+    const spreadsheetId = getRequiredSpreadsheetId();
+    const warnings: ProcessingWarning[] = [];
 
-    console.log('📝 Processing scores from tab:', scoresTabName);
+    console.log('Processing scores from tab:', scoresTabName);
 
-    // Read data - Pass spreadsheetId as first argument
     const scores = await readScoresTab(spreadsheetId, scoresTabName);
-    console.log('📊 Scores read:', scores?.length || 0);
-    
     const players = await readPlayersTab(spreadsheetId);
-    console.log('👥 Players read:', players?.length || 0);
 
-    if (!scores || scores.length === 0) {
+    console.log('Scores read:', scores.length);
+    console.log('Players read:', players.length);
+
+    if (scores.length === 0) {
       return NextResponse.json({ error: 'No scores found' }, { status: 400 });
     }
 
-    // Get week numbers - handle both WeekNumber and weekNumber
-    const weekNumbers = [...new Set(scores.map((s: any) => {
-      const weekNum = s.WeekNumber || s.weekNumber;
-      return parseInt(String(weekNum));
-    }))].filter(w => !isNaN(w));
-    
-    console.log('📅 Week numbers found:', weekNumbers);
+    const validScores = scores.filter((score, index) => {
+      const rowNumber = index + 2;
+      const participants = [score.player1, score.player2, score.player3, score.player4].map((value) => value.trim());
+      const uniqueParticipants = new Set(participants);
 
-    if (weekNumbers.length === 0) {
-      return NextResponse.json({ 
-        error: 'No valid week numbers found in WeekNumber column' 
-      }, { status: 400 });
+      if (!score.weekNumber || Number.isNaN(score.weekNumber)) {
+        warnings.push({
+          code: 'INVALID_WEEK_NUMBER',
+          message: `Skipping row ${rowNumber}: invalid week number.`,
+          rowNumber,
+        });
+        return false;
+      }
+
+      if (participants.some((value) => !value)) {
+        warnings.push({
+          code: 'MISSING_PLAYER_NAME',
+          message: `Skipping row ${rowNumber}: one or more player names are missing.`,
+          weekNumber: score.weekNumber,
+          rowNumber,
+        });
+        return false;
+      }
+
+      if (uniqueParticipants.size !== participants.length) {
+        warnings.push({
+          code: 'DUPLICATE_PLAYER_IN_MATCH',
+          message: `Skipping row ${rowNumber}: duplicate player detected in the same match.`,
+          weekNumber: score.weekNumber,
+          rowNumber,
+        });
+        return false;
+      }
+
+      if (score.score1 === score.score2) {
+        warnings.push({
+          code: 'TIED_SCORE',
+          message: `Skipping row ${rowNumber}: tied scores are not supported.`,
+          weekNumber: score.weekNumber,
+          rowNumber,
+        });
+        return false;
+      }
+
+      return true;
+    });
+
+    if (validScores.length === 0) {
+      return NextResponse.json(
+        {
+          error: 'No valid scores found to process',
+          summary: {
+            totalRows: scores.length,
+            validRows: 0,
+            warningsCount: warnings.length,
+          },
+          warnings,
+        },
+        { status: 400 }
+      );
     }
 
-    // Read existing ratings
+    const weekNumbers = [...new Set(validScores.map((score) => score.weekNumber))]
+      .filter((weekNumber) => !Number.isNaN(weekNumber))
+      .sort((a, b) => a - b);
+
+    if (weekNumbers.length === 0) {
+      return NextResponse.json({ error: 'No valid week numbers found in WeekNumber column' }, { status: 400 });
+    }
+
     const existingRatings = await readRatingsTab(spreadsheetId);
-    console.log('⭐ Existing ratings:', existingRatings?.length || 0);
-
-    // Build initial ratings map for EACH player from Players tab
     const initialRatingsMap: PlayerRatingMap = {};
-    
-    const INITIAL_RATINGS = {
-      BEG: { mu: 10, sigma: 8.33 },
-      PLUS: { mu: 20, sigma: 8.33 },
-      INT: { mu: 25, sigma: 8.33 },
-      ADV: { mu: 35, sigma: 8.33 }
-    };
 
-    for (const player of players as any[]) {
-      // readPlayersTab returns lowercase 'name' property
-      const playerName = player.name || player.PlayerName || player.playerName;
-      if (!playerName) {
-        console.log('⚠️ Skipping player with missing name:', player);
+    for (const player of players) {
+      if (!player.name) {
+        warnings.push({
+          code: 'MISSING_PLAYER_NAME',
+          message: `Skipping player row with missing name in Players tab.`,
+        });
         continue;
       }
 
-      // readPlayersTab returns lowercase 'level' property
-      const level = (player.level || player.Level || 'BEG') as string;
-      const initialRating = INITIAL_RATINGS[level as keyof typeof INITIAL_RATINGS] || INITIAL_RATINGS.BEG;
-      
-      initialRatingsMap[playerName] = new Rating(initialRating.mu, initialRating.sigma);
+      const initialRating = INITIAL_RATINGS[player.level] || INITIAL_RATINGS.BEG;
+      initialRatingsMap[player.name] = new Rating(initialRating.mu, initialRating.sigma);
     }
 
-    console.log(`✅ Built initial ratings for ${Object.keys(initialRatingsMap).length} players`);
-    console.log('Sample initial rating:', Object.entries(initialRatingsMap)[0]);
+    console.log(`Built initial ratings for ${Object.keys(initialRatingsMap).length} players`);
 
-    // Process each week
-    let allUpdatedRatings: any[] = existingRatings || [];
+    const allUpdatedRatings: Record<string, unknown>[] = [...existingRatings];
 
-    for (const weekNumber of weekNumbers.sort((a, b) => a - b)) {
-      console.log(`\n📅 Processing Week ${weekNumber}...`);
-      
-      // Get current ratings (either from previous week or initial)
-      let currentRatingsMap: PlayerRatingMap = {};
-      
-      if (weekNumber === 1) {
-        // Week 1: Use initial ratings
-        currentRatingsMap = { ...initialRatingsMap };
-        console.log(`  ✅ Using initial ratings for Week 1 (${Object.keys(currentRatingsMap).length} players)`);
+    for (const weekNumber of weekNumbers) {
+      console.log(`\nProcessing Week ${weekNumber}...`);
+
+      const currentRatingsMap: PlayerRatingMap = {};
+
+      if (weekNumber === 1 || allUpdatedRatings.length === 0) {
+        Object.assign(currentRatingsMap, initialRatingsMap);
       } else {
-        // Week 2+: Use previous week's final ratings as baseline
-        if (allUpdatedRatings.length > 0) {
-          console.log(`  ✅ Using Week ${weekNumber - 1} ratings as baseline`);
-          
-          // Start with all players from initial ratings
-          for (const [playerName, initialRating] of Object.entries(initialRatingsMap)) {
-            // Check if player has rating from previous week
-            // Note: allUpdatedRatings uses uppercase PlayerName (set at line 159)
-            const playerRating = allUpdatedRatings.find((r: any) => {
-              const rName = r.PlayerName || r.playerName;
-              return rName === playerName;
-            });
-            
-            if (playerRating) {
-              const prevMu = playerRating[`Week${weekNumber - 1}_Mu`];
-              const prevSigma = playerRating[`Week${weekNumber - 1}_Sigma`];
-              
-              if (prevMu !== undefined && prevSigma !== undefined) {
-                currentRatingsMap[playerName] = new Rating(prevMu, prevSigma);
-              } else {
-                // Player didn't play in previous week, use their initial rating
-                currentRatingsMap[playerName] = initialRating;
-              }
-            } else {
-              // New player or no previous data, use initial rating
-              currentRatingsMap[playerName] = initialRating;
-            }
+        for (const [playerName, initialRating] of Object.entries(initialRatingsMap)) {
+          const playerRating =
+            allUpdatedRatings.find((rating) => {
+              const ratingName = (rating.PlayerName || rating.playerName) as string | undefined;
+              return ratingName === playerName;
+            }) ?? null;
+
+          if (!playerRating) {
+            currentRatingsMap[playerName] = initialRating;
+            continue;
           }
-          
-          console.log(`  ✅ Loaded ratings for ${Object.keys(currentRatingsMap).length} players`);
-        } else {
-          // No previous ratings found, use initial
-          currentRatingsMap = { ...initialRatingsMap };
-          console.log(`  ⚠️ No previous ratings found, using initial ratings`);
+
+          const latestKnownRating = getLatestKnownRating(playerRating, weekNumber);
+          currentRatingsMap[playerName] = latestKnownRating ?? initialRating;
         }
       }
 
-      // Filter matches for this week
-      const weekMatches = scores.filter((s: any) => {
-        const weekNum = s.WeekNumber || s.weekNumber;
-        return parseInt(String(weekNum)) === weekNumber;
-      });
-      console.log(`🏸 Matches for week ${weekNumber}:`, weekMatches.length);
-
-      // Calculate new ratings
+      const weekMatches = validScores.filter((score) => score.weekNumber === weekNumber);
       const updatedRatings = calculateWeekRatings(weekMatches, currentRatingsMap);
-      console.log(`✅ Calculated ratings for ${Object.keys(updatedRatings).length} players`);
 
-      // Convert to array format for sheet writing
       const ratingsArray = Object.entries(updatedRatings).map(([playerName, rating]) => {
-        const player = (players as any[]).find((p: any) => {
-          const pName = p.name || p.PlayerName || p.playerName;
-          return pName === playerName;
-        });
-        
-        const existingData = allUpdatedRatings.find((r: any) => {
-          const rName = r.PlayerName || r.playerName;
-          return rName === playerName;
-        }) || {};
-        
+        const player = players.find((entry) => entry.name === playerName);
+        const existingData =
+          allUpdatedRatings.find((entry) => {
+            const ratingName = (entry.PlayerName || entry.playerName) as string | undefined;
+            return ratingName === playerName;
+          }) ?? {};
+
         return {
           ...existingData,
           PlayerName: playerName,
-          CurrentLevel: player?.level || player?.Level || 'BEG',
+          CurrentLevel: player?.level || 'BEG',
           [`Week${weekNumber}_Mu`]: rating.mu,
           [`Week${weekNumber}_Sigma`]: rating.sigma,
         };
       });
 
-      // Update the all ratings array
       for (const rating of ratingsArray) {
-        const index = allUpdatedRatings.findIndex((r: any) => {
-          const rName = r.PlayerName || r.playerName;
-          return rName === rating.PlayerName;
+        const index = allUpdatedRatings.findIndex((entry) => {
+          const ratingName = (entry.PlayerName || entry.playerName) as string | undefined;
+          return ratingName === rating.PlayerName;
         });
-        
+
         if (index >= 0) {
           allUpdatedRatings[index] = rating;
         } else {
@@ -181,62 +231,61 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Convert objects to 2D array for sheet writing
-      // Get all unique column names
       const allColumns = new Set<string>();
       for (const rating of allUpdatedRatings) {
-        Object.keys(rating).forEach(key => allColumns.add(key));
+        Object.keys(rating).forEach((key) => allColumns.add(key));
       }
 
-      // Sort columns: PlayerName, CurrentLevel, then Week columns sorted
       const sortedColumns = Array.from(allColumns).sort((a, b) => {
         if (a === 'PlayerName') return -1;
         if (b === 'PlayerName') return 1;
         if (a === 'CurrentLevel') return -1;
         if (b === 'CurrentLevel') return 1;
-        
-        // Extract week numbers for Week*_Mu and Week*_Sigma columns
+
         const weekRegex = /Week(\d+)_(Mu|Sigma)/;
         const matchA = a.match(weekRegex);
         const matchB = b.match(weekRegex);
-        
+
         if (matchA && matchB) {
-          const weekA = parseInt(matchA[1]);
-          const weekB = parseInt(matchB[1]);
+          const weekA = parseInt(matchA[1], 10);
+          const weekB = parseInt(matchB[1], 10);
           if (weekA !== weekB) return weekA - weekB;
-          // If same week, Mu comes before Sigma
           return matchA[2] === 'Mu' ? -1 : 1;
         }
-        
+
         return a.localeCompare(b);
       });
 
-      // Create header row
-      const headerRow = sortedColumns;
+      const dataRows = allUpdatedRatings.map((rating) =>
+        sortedColumns.map((column) => (rating[column] as string | number | undefined) ?? '')
+      );
+      const sheetData = [sortedColumns, ...dataRows];
 
-      // Create data rows
-      const dataRows = allUpdatedRatings.map((rating: any) => {
-        return sortedColumns.map(col => rating[col] ?? '');
-      });
-
-      // Combine header and data
-      const sheetData = [headerRow, ...dataRows];
-
-      // Write to sheet
       await writeRatingsTab(spreadsheetId, sheetData);
-      console.log(`✅ Week ${weekNumber} written to Ratings tab with ${sheetData.length - 1} players`);
+      console.log(`Week ${weekNumber} written to Ratings tab with ${sheetData.length - 1} players`);
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
-      message: `Processed ${scores.length} matches across ${weekNumbers.length} week(s) for ${players.length} players`,
+      message: `Processed ${validScores.length} valid matches across ${weekNumbers.length} week(s) for ${players.length} players`,
+      summary: {
+        totalRows: scores.length,
+        validRows: validScores.length,
+        processedWeeks: weekNumbers.length,
+        warningsCount: warnings.length,
+      },
+      warnings,
     });
+  } catch (error: unknown) {
+    console.error('Error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to process scores';
 
-  } catch (error: any) {
-    console.error('❌ Error:', error);
-    return NextResponse.json({ 
-      error: error.message || 'Failed to process scores',
-      details: error.toString()
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: errorMessage,
+        details: error instanceof Error ? error.toString() : String(error),
+      },
+      { status: 500 }
+    );
   }
 }

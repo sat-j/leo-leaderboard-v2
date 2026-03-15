@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { readPlayersTab } from '@/lib/googleSheets';
+import { getSpreadsheetId } from '@/lib/config';
 
 export async function GET() {
   try {
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const spreadsheetId = getSpreadsheetId();
     if (!spreadsheetId) {
       return NextResponse.json({ error: 'Google Sheet ID not configured' }, { status: 500 });
     }

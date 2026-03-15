@@ -10,6 +10,7 @@ import {
   getLevelLeaderboards,
   calculatePlayerWeekStats
 } from '@/lib/calculations';
+import { getSpreadsheetId } from '@/lib/config';
 import { Match, PlayerRating, PlayerLevel, LeaderboardData } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const weekParam = searchParams.get('week');
 
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const spreadsheetId = getSpreadsheetId();
     if (!spreadsheetId) {
       return NextResponse.json({ error: 'Google Sheet ID not configured' }, { status: 500 });
     }

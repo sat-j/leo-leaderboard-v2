@@ -1,9 +1,15 @@
 import { google } from 'googleapis';
 import { Player, Match, PlayerLevel } from '@/types';
+import { getGoogleCredentials } from '@/lib/config';
 
 function getAuth() {
+  const credentials = getGoogleCredentials();
+  if (!credentials) {
+    throw new Error('GOOGLE_CREDENTIALS not configured');
+  }
+
   return new google.auth.GoogleAuth({
-    credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS || '{}'),
+    credentials: JSON.parse(credentials),
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   });
 }
