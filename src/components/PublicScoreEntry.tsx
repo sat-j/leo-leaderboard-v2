@@ -14,13 +14,6 @@ interface PlayerOption {
   isActive: boolean;
 }
 
-interface PlayerPickerProps {
-  label: string;
-  value: PlayerOption | null;
-  onChange: (value: PlayerOption | null) => void;
-  allPlayers: PlayerOption[];
-}
-
 interface RecentMatch {
   id: string;
   playedAt: string;
@@ -30,6 +23,13 @@ interface RecentMatch {
   status: string;
   team1: string[];
   team2: string[];
+}
+
+interface PlayerPickerProps {
+  label: string;
+  value: PlayerOption | null;
+  onChange: (value: PlayerOption | null) => void;
+  allPlayers: PlayerOption[];
 }
 
 function PlayerPicker({ label, value, onChange, allPlayers }: PlayerPickerProps) {
@@ -123,12 +123,25 @@ function PlayerPicker({ label, value, onChange, allPlayers }: PlayerPickerProps)
   );
 }
 
-export default function PublicScoreEntry() {
+function getTodayDateString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+interface PublicScoreEntryProps {
+  mode?: 'page' | 'drawer';
+}
+
+export default function PublicScoreEntry({ mode = 'page' }: PublicScoreEntryProps) {
   const [players, setPlayers] = useState<PlayerOption[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [recentMatches, setRecentMatches] = useState<RecentMatch[]>([]);
   const [loadingRecentMatches, setLoadingRecentMatches] = useState(false);
+  const [matchSearchQuery, setMatchSearchQuery] = useState('');
 
   const [p1, setP1] = useState<PlayerOption | null>(null);
   const [p2, setP2] = useState<PlayerOption | null>(null);
@@ -145,6 +158,19 @@ export default function PublicScoreEntry() {
     () => players.filter((player) => !selectedIds.includes(player.id)),
     [players, selectedIds]
   );
+  const filteredRecentMatches = useMemo(() => {
+    const query = matchSearchQuery.trim().toLowerCase();
+    if (!query) {
+      return recentMatches;
+    }
+
+    return recentMatches.filter((match) => {
+      const haystack = [...match.team1, ...match.team2, `${match.score1}-${match.score2}`]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [matchSearchQuery, recentMatches]);
 
   const canSubmit =
     p1 &&
@@ -182,7 +208,8 @@ export default function PublicScoreEntry() {
   async function loadRecentMatches() {
     try {
       setLoadingRecentMatches(true);
-      const response = await fetch('/api/public/matches/recent?limit=8');
+      const today = getTodayDateString();
+      const response = await fetch(`/api/public/matches/recent?date=${today}&limit=100`);
       const result = await response.json();
 
       if (!response.ok || !result.success) {
@@ -254,125 +281,154 @@ export default function PublicScoreEntry() {
     }
   }
 
-  return (
-    <div className={styles.pageShell}>
-      <div className={styles.pageInner}>
+  const content = (
+    <>
+      {mode === 'page' ? (
         <Link href="/" className={styles.backLink}>
-          <span>←</span>
+          <span>&larr;</span>
           <span>Back to leaderboard</span>
         </Link>
+      ) : null}
 
-        <div className={styles.hero}>
-          <div className={styles.eyebrow}>Enter Score</div>
-          <h1 className={styles.title}>Report a match without leaving club night behind.</h1>
-          <p className={styles.subtitle}>
-            Quick mobile-first score entry for anyone at the club. Server-side checks handle duplicates,
-            bad scores, and suspicious repeat submissions.
-          </p>
+      <div className={styles.hero}>
+        <div className={styles.eyebrow}>Enter Score</div>
+        <h1 className={styles.title}>Quick score entry.</h1>
+        <p className={styles.subtitle}>
+          Pick four players, enter the final score, submit, and get back to the next game.
+        </p>
+      </div>
+
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <div>
+            <div className={styles.cardTitle}>Live score entry</div>
+            <div className={styles.cardSubtitle}>No extra clutter. Just players, score, and submit.</div>
+          </div>
+          <span className={styles.pill}>Public</span>
         </div>
 
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <div>
-              <div className={styles.cardTitle}>Live score entry</div>
-              <div className={styles.cardSubtitle}>Pick four players, add the final score, then submit.</div>
+        {loadingPlayers ? <div className={styles.statusBox}>Loading players...</div> : null}
+        {loadError ? <div className={`${styles.statusBox} ${styles.statusError}`}>{loadError}</div> : null}
+        {submitMessage ? (
+          <div
+            className={`${styles.statusBox} ${
+              submitState === 'success' ? styles.statusSuccess : styles.statusError
+            }`}
+          >
+            {submitMessage}
+          </div>
+        ) : null}
+
+        <form onSubmit={handleSubmit}>
+          <div className={styles.teamsContainer}>
+            <div className={`${styles.teamBox} ${styles.teamOne}`}>
+              <div className={styles.teamHeader}>Team 1</div>
+              <PlayerPicker label="Player 1" value={p1} onChange={setP1} allPlayers={availablePlayers} />
+              <PlayerPicker label="Player 2" value={p2} onChange={setP2} allPlayers={availablePlayers} />
+              <div className={styles.field}>
+                <div className={styles.label}>Score</div>
+                <input
+                  className={`${styles.input} ${styles.scoreInput}`}
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={score1}
+                  onChange={(event) => setScore1(event.target.value)}
+                />
+              </div>
             </div>
-            <span className={styles.pill}>Public</span>
+
+            <div className={`${styles.teamBox} ${styles.teamTwo}`}>
+              <div className={styles.teamHeader}>Team 2</div>
+              <PlayerPicker label="Player 3" value={p3} onChange={setP3} allPlayers={availablePlayers} />
+              <PlayerPicker label="Player 4" value={p4} onChange={setP4} allPlayers={availablePlayers} />
+              <div className={styles.field}>
+                <div className={styles.label}>Score</div>
+                <input
+                  className={`${styles.input} ${styles.scoreInput}`}
+                  type="number"
+                  min="0"
+                  max="30"
+                  value={score2}
+                  onChange={(event) => setScore2(event.target.value)}
+                />
+              </div>
+            </div>
           </div>
 
-          {loadingPlayers ? <div className={styles.statusBox}>Loading players...</div> : null}
-          {loadError ? <div className={`${styles.statusBox} ${styles.statusError}`}>{loadError}</div> : null}
-          {submitMessage ? (
-            <div
-              className={`${styles.statusBox} ${
-                submitState === 'success' ? styles.statusSuccess : styles.statusError
-              }`}
-            >
-              {submitMessage}
+          <button className={styles.submitButton} type="submit" disabled={!canSubmit || submitState === 'submitting'}>
+            {submitState === 'submitting' ? 'Submitting...' : 'Submit score'}
+          </button>
+        </form>
+      </div>
+
+      <section className={styles.recentSection}>
+        <div className={styles.recentSectionHeader}>
+          <div className={styles.recentTitleBlock}>
+            <div className={styles.recentTitle}>Today&apos;s matches</div>
+            <div className={styles.recentSubtitle}>Check correctness here if needed.</div>
+          </div>
+          <button
+            type="button"
+            className={styles.refreshButton}
+            onClick={loadRecentMatches}
+            disabled={loadingRecentMatches}
+          >
+            {loadingRecentMatches ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+
+        <div className={styles.controlsRow}>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder="Search player or score"
+            value={matchSearchQuery}
+            onChange={(event) => setMatchSearchQuery(event.target.value)}
+          />
+          <div className={styles.todayPill}>Today only</div>
+          <button
+            type="button"
+            className={styles.refreshButton}
+            onClick={loadRecentMatches}
+            disabled={loadingRecentMatches}
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div className={styles.matchList}>
+          {filteredRecentMatches.map((match) => (
+            <div className={styles.matchCard} key={match.id}>
+              <div className={styles.teamsRow}>
+                <div className={styles.teamText}>{match.team1.join(' / ')}</div>
+                <div className={styles.scoreText}>
+                  {match.score1} - {match.score2}
+                </div>
+                <div className={styles.teamText}>{match.team2.join(' / ')}</div>
+              </div>
             </div>
+          ))}
+
+          {!loadingRecentMatches && recentMatches.length === 0 ? (
+            <div className={styles.statusBox}>No scores submitted yet for today.</div>
           ) : null}
 
-          <form onSubmit={handleSubmit}>
-            <div className={styles.teamsContainer}>
-              <div className={`${styles.teamBox} ${styles.teamOne}`}>
-                <div className={styles.teamHeader}>Team 1</div>
-                <PlayerPicker label="Player 1" value={p1} onChange={setP1} allPlayers={availablePlayers} />
-                <PlayerPicker label="Player 2" value={p2} onChange={setP2} allPlayers={availablePlayers} />
-                <div className={styles.field}>
-                  <div className={styles.label}>Score</div>
-                  <input
-                    className={`${styles.input} ${styles.scoreInput}`}
-                    type="number"
-                    min="0"
-                    max="30"
-                    value={score1}
-                    onChange={(event) => setScore1(event.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className={`${styles.teamBox} ${styles.teamTwo}`}>
-                <div className={styles.teamHeader}>Team 2</div>
-                <PlayerPicker label="Player 3" value={p3} onChange={setP3} allPlayers={availablePlayers} />
-                <PlayerPicker label="Player 4" value={p4} onChange={setP4} allPlayers={availablePlayers} />
-                <div className={styles.field}>
-                  <div className={styles.label}>Score</div>
-                  <input
-                    className={`${styles.input} ${styles.scoreInput}`}
-                    type="number"
-                    min="0"
-                    max="30"
-                    value={score2}
-                    onChange={(event) => setScore2(event.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button className={styles.submitButton} type="submit" disabled={!canSubmit || submitState === 'submitting'}>
-              {submitState === 'submitting' ? 'Submitting...' : 'Submit score'}
-            </button>
-          </form>
-
-          <div className={styles.recentSection}>
-            <div className={styles.recentHeader}>
-              <div className={styles.recentTitle}>Latest submissions</div>
-              <button
-                type="button"
-                className={styles.refreshButton}
-                onClick={loadRecentMatches}
-                disabled={loadingRecentMatches}
-              >
-                {loadingRecentMatches ? 'Refreshing...' : 'Refresh'}
-              </button>
-            </div>
-
-            <div className={styles.matchList}>
-              {recentMatches.map((match) => (
-                <div className={styles.matchCard} key={match.id}>
-                  <div className={styles.teamsRow}>
-                    <div className={styles.teamText}>{match.team1.join(' / ')}</div>
-                    <div className={styles.scoreText}>
-                      {match.score1} - {match.score2}
-                    </div>
-                    <div className={styles.teamText}>{match.team2.join(' / ')}</div>
-                  </div>
-                  <div className={styles.meta}>
-                    {match.date ?? 'Unknown date'} • {new Date(match.playedAt).toLocaleTimeString([], {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {!loadingRecentMatches && recentMatches.length === 0 ? (
-                <div className={styles.statusBox}>No recent submissions yet.</div>
-              ) : null}
-            </div>
-          </div>
+          {!loadingRecentMatches && recentMatches.length > 0 && filteredRecentMatches.length === 0 ? (
+            <div className={styles.statusBox}>No matches found for that search.</div>
+          ) : null}
         </div>
-      </div>
+      </section>
+    </>
+  );
+
+  if (mode === 'drawer') {
+    return <div className={styles.drawerContent}>{content}</div>;
+  }
+
+  return (
+    <div className={styles.pageShell}>
+      <div className={styles.pageInner}>{content}</div>
     </div>
   );
 }

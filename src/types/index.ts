@@ -105,3 +105,19 @@ export interface LeaderboardData {
   matches: Match[];
   playerWeekStats?: PlayerWeekStat[];
 }
+
+export interface PlayDateOption {
+  id: string;
+  date: string;
+  labelShort: string;
+  labelLong: string;
+  matchCount: number;
+}
+
+export interface PublicLeaderboardData extends Omit<LeaderboardData, 'currentWeek'> {
+  selectedDate: string;
+  selectedDateLabel: string;
+  previousDate: string | null;
+  nextDate: string | null;
+  playDates: PlayDateOption[];
+}

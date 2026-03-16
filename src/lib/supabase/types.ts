@@ -107,6 +107,87 @@ export interface Database {
         };
         Update: Partial<Database['public']['Tables']['match_participants']['Insert']>;
       };
+      processing_runs: {
+        Row: {
+          id: string;
+          triggered_by_user_id: string | null;
+          trigger_type: string;
+          scope: string;
+          status: string;
+          started_at: string;
+          finished_at: string | null;
+          summary: Record<string, unknown> | null;
+          error_message: string | null;
+        };
+        Insert: {
+          id?: string;
+          triggered_by_user_id?: string | null;
+          trigger_type: string;
+          scope: string;
+          status: string;
+          started_at?: string;
+          finished_at?: string | null;
+          summary?: Record<string, unknown> | null;
+          error_message?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['processing_runs']['Insert']>;
+      };
+      rating_snapshots: {
+        Row: {
+          id: string;
+          player_id: string;
+          play_date_id: string;
+          processing_run_id: string | null;
+          mu: number;
+          sigma: number;
+          skill_rating: number;
+          rating_change: number | null;
+          rank_overall: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          player_id: string;
+          play_date_id: string;
+          processing_run_id?: string | null;
+          mu: number;
+          sigma: number;
+          skill_rating: number;
+          rating_change?: number | null;
+          rank_overall?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['rating_snapshots']['Insert']>;
+      };
+      player_date_stats: {
+        Row: {
+          id: string;
+          player_id: string;
+          play_date_id: string;
+          matches_played: number;
+          matches_won: number;
+          win_rate: number;
+          points_scored: number;
+          points_conceded: number;
+          points_difference: number;
+          rating_change: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          player_id: string;
+          play_date_id: string;
+          matches_played?: number;
+          matches_won?: number;
+          win_rate?: number;
+          points_scored?: number;
+          points_conceded?: number;
+          points_difference?: number;
+          rating_change?: number;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['player_date_stats']['Insert']>;
+      };
       public_submission_logs: {
         Row: {
           id: string;

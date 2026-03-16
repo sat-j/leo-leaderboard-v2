@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import PlayerStatsTable from '@/components/PlayerStatsTable';
@@ -8,7 +8,7 @@ import { PlayerOverallStat } from '@/types';
 
 interface OverallData {
   overallStats: PlayerOverallStat[];
-  totalWeeks: number;
+  totalPlayDates: number;
   totalMatches: number;
 }
 
@@ -20,17 +20,16 @@ export default function OverallPage() {
   const fetchOverallData = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/overall');
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch overall data');
-      }
-      
+      const response = await fetch('/api/public/leaderboard/overall');
       const result = await response.json();
-      setData(result);
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error?.message || 'Failed to fetch overall data');
+      }
+
+      setData(result.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
@@ -58,7 +57,7 @@ export default function OverallPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-electric-900 to-electric-700 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md text-center">
-          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <div className="text-red-500 text-5xl mb-4">!</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Data</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
@@ -79,38 +78,35 @@ export default function OverallPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-electric-900 to-electric-700">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-            📊 Overall Statistics - All Weeks
-          </h1>
-          <p className="text-electric-200">Cumulative player statistics across all weeks</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Overall Statistics</h1>
+          <p className="text-electric-200">Cumulative player statistics across all processed play dates</p>
           <div className="mt-4 flex justify-center gap-4 text-electric-200 text-sm">
-            <span>Total Weeks: <strong className="text-coral-500" aria-label="Total weeks played">{data.totalWeeks}</strong></span>
+            <span>
+              Total Play Dates:{' '}
+              <strong className="text-coral-500" aria-label="Total play dates">
+                {data.totalPlayDates}
+              </strong>
+            </span>
             <span>•</span>
-            <span>Total Matches: <strong className="text-coral-500" aria-label="Total matches played">{data.totalMatches}</strong></span>
+            <span>
+              Total Matches:{' '}
+              <strong className="text-coral-500" aria-label="Total matches played">
+                {data.totalMatches}
+              </strong>
+            </span>
           </div>
         </div>
 
-        {/* Back to Leaderboard Link */}
         <div className="mb-6">
-          <Link 
-            href="/" 
-            className="inline-flex items-center gap-2 text-white hover:text-coral-500 transition-colors"
-          >
+          <Link href="/" className="inline-flex items-center gap-2 text-white hover:text-coral-500 transition-colors">
             <ArrowLeft className="w-5 h-5" />
-            Back to Weekly Leaderboard
+            Back to Leaderboard
           </Link>
         </div>
 
-        {/* Overall Statistics Table */}
-        <PlayerStatsTable 
-          stats={data.overallStats} 
-          title="Overall Player Statistics" 
-          isOverall={true}
-        />
+        <PlayerStatsTable stats={data.overallStats} title="Overall Player Statistics" isOverall={true} />
 
-        {/* Footer */}
         <div className="mt-12 text-center text-electric-200 text-sm">
           <p>Powered by TrueSkill Rating System</p>
         </div>

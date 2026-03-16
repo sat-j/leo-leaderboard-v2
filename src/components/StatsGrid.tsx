@@ -14,7 +14,7 @@ export default function StatsGrid({ weekStats }: StatsGridProps) {
       <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
         <div className="flex items-center gap-3 mb-4">
           <Trophy className="w-6 h-6 text-coral-600" />
-          <h3 className="text-lg font-semibold text-gray-800">Top 3 Players of the Week</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Top Movers</h3>
         </div>
         <div className="space-y-3">
           {weekStats.topPlayers.length > 0 ? (

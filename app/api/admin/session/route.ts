@@ -40,3 +40,20 @@ export async function POST(request: NextRequest) {
 
   return response;
 }
+
+export async function DELETE() {
+  const response = NextResponse.json({
+    success: true,
+    data: {
+      authenticated: false,
+    },
+  });
+
+  response.cookies.set({
+    ...getAdminSessionCookieOptions(),
+    value: '',
+    maxAge: 0,
+  });
+
+  return response;
+}

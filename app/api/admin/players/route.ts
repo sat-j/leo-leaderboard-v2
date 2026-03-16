@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminRequest } from '@/lib/auth/adminSession';
 import { getErrorMessage } from '@/lib/errors';
-import { createMatch, listAdminMatches } from '@/lib/repositories/matches';
-import { validateMatchInput } from '@/lib/validation/matches';
+import { createPlayer, listPlayers } from '@/lib/repositories/players';
+
+function parseActiveFilter(rawValue: string | null) {
+  if (rawValue === null) {
+    return undefined;
+  }
+
+  if (rawValue === 'true') {
+    return true;
+  }
+
+  if (rawValue === 'false') {
+    return false;
+  }
+
+  return undefined;
+}
 
 export async function GET(request: NextRequest) {
   if (!isAdminRequest(request)) {
@@ -11,22 +26,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const limitParam = parseInt(searchParams.get('limit') || '20', 10);
-    const offsetParam = parseInt(searchParams.get('offset') || '0', 10);
-    const limit = Number.isNaN(limitParam) ? 20 : Math.min(Math.max(limitParam, 1), 100);
-    const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0);
     const search = searchParams.get('search')?.trim() || undefined;
-    const status = searchParams.get('status')?.trim() || undefined;
+    const active = parseActiveFilter(searchParams.get('active'));
+    const limitParam = Number.parseInt(searchParams.get('limit') || '100', 10);
+    const limit = Number.isNaN(limitParam) ? 100 : Math.min(Math.max(limitParam, 1), 250);
 
-    const result = await listAdminMatches({ limit, offset, search, status });
+    const players = await listPlayers({ search, active, limit });
 
     return NextResponse.json({
       success: true,
       data: {
-        matches: result.matches,
-        total: result.total,
-        limit,
-        offset,
+        players,
       },
     });
   } catch (error) {
@@ -49,24 +59,36 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const payload = await request.json();
-    const issues = validateMatchInput(payload);
+    const payload = (await request.json()) as {
+      displayName?: string;
+      level?: string;
+      isActive?: boolean;
+    };
 
-    if (issues.length > 0) {
+    if (!payload.displayName?.trim()) {
       return NextResponse.json(
         {
-          error: 'Validation failed',
-          details: issues,
+          success: false,
+          error: {
+            code: 'VALIDATION_FAILED',
+            message: 'displayName is required',
+          },
         },
         { status: 400 }
       );
     }
 
-    const result = await createMatch(payload);
+    const player = await createPlayer({
+      displayName: payload.displayName,
+      level: payload.level ?? 'INT',
+      isActive: payload.isActive ?? true,
+    });
 
     return NextResponse.json({
       success: true,
-      data: result,
+      data: {
+        player,
+      },
     });
   } catch (error) {
     return NextResponse.json(

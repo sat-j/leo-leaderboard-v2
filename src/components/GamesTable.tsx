@@ -15,7 +15,7 @@ export default function GamesTable({ matches }: GamesTableProps) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Matches</h2>
-        <p className="text-gray-500">No matches found for this week.</p>
+        <p className="text-gray-500">No matches found for this play date.</p>
       </div>
     );
   }

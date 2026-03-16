@@ -4,17 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface PlayerDropdownProps {
-  playerNames: string[];
+  players: Array<{
+    displayName: string;
+    slug: string;
+  }>;
 }
 
-export default function PlayerDropdown({ playerNames }: PlayerDropdownProps) {
+export default function PlayerDropdown({ players }: PlayerDropdownProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const filtered = playerNames.filter(name =>
-    name.toLowerCase().includes(search.toLowerCase())
+  const filtered = players.filter((player) =>
+    player.displayName.toLowerCase().includes(search.toLowerCase())
   );
 
   useEffect(() => {
@@ -28,10 +31,10 @@ export default function PlayerDropdown({ playerNames }: PlayerDropdownProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function handleSelect(name: string) {
+  function handleSelect(slug: string) {
     setOpen(false);
     setSearch('');
-    router.push(`/player-stats/${encodeURIComponent(name)}`);
+    router.push(`/player-stats/${encodeURIComponent(slug)}`);
   }
 
   return (
@@ -58,13 +61,13 @@ export default function PlayerDropdown({ playerNames }: PlayerDropdownProps) {
             {filtered.length === 0 ? (
               <li className="px-3 py-2 text-electric-300 text-sm">No players found</li>
             ) : (
-              filtered.map(name => (
-                <li key={name}>
+              filtered.map((player) => (
+                <li key={player.slug}>
                   <button
-                    onClick={() => handleSelect(name)}
+                    onClick={() => handleSelect(player.slug)}
                     className="w-full text-left px-3 py-2 text-white hover:bg-electric-600 hover:text-coral-400 transition-colors text-sm"
                   >
-                    {name}
+                    {player.displayName}
                   </button>
                 </li>
               ))

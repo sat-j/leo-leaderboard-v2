@@ -4,18 +4,21 @@ import { useState, useEffect } from 'react';
 import PlayerDropdown from './PlayerDropdown';
 
 export default function NavPlayerStats() {
-  const [playerNames, setPlayerNames] = useState<string[]>([]);
+  const [players, setPlayers] = useState<Array<{ displayName: string; slug: string }>>([]);
 
   useEffect(() => {
-    fetch('/api/player-stats/list')
+    fetch('/api/public/players')
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data.playerNames)) {
-          setPlayerNames(data.playerNames);
+        if (Array.isArray(data.data?.players)) {
+          setPlayers(data.data.players.map((player: { displayName: string; slug: string }) => ({
+            displayName: player.displayName,
+            slug: player.slug,
+          })));
         }
       })
       .catch(() => {});
   }, []);
 
-  return <PlayerDropdown playerNames={playerNames} />;
+  return <PlayerDropdown players={players} />;
 }
