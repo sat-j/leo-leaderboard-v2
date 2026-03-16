@@ -173,7 +173,7 @@ export function getLevelLeaderboards(
     });
   
   // Group players by level
-  const levels: PlayerLevel[] = ['ADV', 'INT', 'PLUS', 'BEG'];
+  const levels: PlayerLevel[] = ['ADV', 'INT', 'PLUS'];
   
   levels.forEach(level => {
     const levelPlayers: PlayerRating[] = [];
@@ -263,7 +263,7 @@ export function calculatePlayerWeekStats(
   playerStats.forEach((stats, playerName) => {
     const currentRating = currentRatings.get(playerName);
     const previousRating = previousRatings.get(playerName);
-    const level = playerLevels.get(playerName) || 'BEG';
+    const level = playerLevels.get(playerName) || 'INT';
     
     if (currentRating) {
       // Calculate skill rating (mu - 3*sigma)
@@ -361,7 +361,7 @@ export function calculatePlayerOverallStats(
     }
 
     if (currentRating) {
-      const level = playerLevels.get(playerName) || 'BEG';
+      const level = playerLevels.get(playerName) || 'INT';
       const currentSkillRating = currentRating.mu - 3 * currentRating.sigma;
       const totalRatingChange = initialRating 
         ? currentRating.mu - initialRating.mu 

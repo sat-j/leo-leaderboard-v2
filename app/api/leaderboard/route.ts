@@ -11,6 +11,7 @@ import {
   calculatePlayerWeekStats
 } from '@/lib/calculations';
 import { getSpreadsheetId } from '@/lib/config';
+import { normalizePlayerLevel } from '@/lib/playerLevels';
 import { Match, PlayerRating, PlayerLevel, LeaderboardData } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
     playerRows.forEach((row: string[]) => {
       const playerName = row[0];
       const levelIndex = headers.indexOf('CurrentLevel');
-      const level = (row[levelIndex] || 'BEG') as PlayerLevel;
+      const level = normalizePlayerLevel(String(row[levelIndex] || 'INT'));
       playerLevels.set(playerName, level);
 
       // Get week 1 ratings
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       playerRows.forEach((row: string[]) => {
         const playerName = row[0];
         const levelIndex = headers.indexOf('CurrentLevel');
-        const level = (row[levelIndex] || 'BEG') as PlayerLevel;
+        const level = normalizePlayerLevel(String(row[levelIndex] || 'INT'));
         const weekMuIndex = headers.indexOf(`Week${previousWeek}_Mu`);
         const weekSigmaIndex = headers.indexOf(`Week${previousWeek}_Sigma`);
         

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { Rating } from 'ts-trueskill';
+import { isAdminRequest } from '@/lib/auth/adminSession';
 import { readScoresTab, readPlayersTab, readRatingsTab, writeRatingsTab } from '@/lib/googleSheets';
 import { calculateWeekRatings } from '@/lib/trueskill';
 import { getAdminSecret, getRequiredSpreadsheetId } from '@/lib/config';
+import { normalizePlayerLevel } from '@/lib/playerLevels';
 
 interface PlayerRatingMap {
   [playerName: string]: Rating;
@@ -17,7 +19,6 @@ interface ProcessingWarning {
 }
 
 const INITIAL_RATINGS = {
-  BEG: { mu: 10, sigma: 8.33 },
   PLUS: { mu: 20, sigma: 8.33 },
   INT: { mu: 25, sigma: 8.33 },
   ADV: { mu: 35, sigma: 8.33 },
@@ -60,7 +61,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Admin secret not configured' }, { status: 500 });
     }
 
-    if (typeof adminSecret !== 'string' || !secretsMatch(expectedSecret, adminSecret)) {
+    const hasAdminSession = isAdminRequest(request);
+    const hasMatchingSecret = typeof adminSecret === 'string' && secretsMatch(expectedSecret, adminSecret);
+
+    if (!hasAdminSession && !hasMatchingSecret) {
       return NextResponse.json({ error: 'Invalid admin secret' }, { status: 401 });
     }
 
@@ -165,7 +169,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      const initialRating = INITIAL_RATINGS[player.level] || INITIAL_RATINGS.BEG;
+      const initialRating = INITIAL_RATINGS[player.level] || INITIAL_RATINGS.INT;
       initialRatingsMap[player.name] = new Rating(initialRating.mu, initialRating.sigma);
     }
 
@@ -212,7 +216,7 @@ export async function POST(request: NextRequest) {
         return {
           ...existingData,
           PlayerName: playerName,
-          CurrentLevel: player?.level || 'BEG',
+          CurrentLevel: normalizePlayerLevel(player?.level || 'INT'),
           [`Week${weekNumber}_Mu`]: rating.mu,
           [`Week${weekNumber}_Sigma`]: rating.sigma,
         };

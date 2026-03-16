@@ -68,14 +68,17 @@ Reference: [docs/phased-roadmap.md](c:/Sathish/workspace/club/leo-leaderboard-v2
 - [ ] Build a verification script to compare imported counts against the existing sheet data.
 - [ ] Create API endpoints for:
   - listing players
-  - creating a match
+  - public score submission
   - listing recent matches
   - retrieving leaderboard data
   - retrieving player stats
-- [ ] Refactor the score-entry app to read players from the new backend.
-- [ ] Refactor the score-entry app to submit matches to the new backend instead of the current external Google Sheets writer.
+- [ ] Refactor the score-entry UI to read players from the new backend.
+- [ ] Refactor the score-entry UI to submit matches to the new backend instead of the current external Google Sheets writer.
 - [ ] Keep Google Sheets import available only as a temporary fallback during migration.
 - [ ] Add basic row-level security or service-role boundaries for write operations.
+- [ ] Add server-side rate limiting for public score submission.
+- [ ] Add duplicate-submission detection for public score submission.
+- [ ] Add suspicious-submission logging for admin review.
 
 ### Exit criteria
 
@@ -105,6 +108,7 @@ Reference: [docs/phased-roadmap.md](c:/Sathish/workspace/club/leo-leaderboard-v2
   - short day label
   - short date label
   - previous/next controls
+- [ ] Add a prominent `Enter Score` CTA on the homepage without crowding the date navigation controls.
 - [ ] Update the home page to default to the latest available play date.
 - [ ] Update all leaderboard endpoints to accept `date` or `playDateId` instead of `week`.
 - [ ] Update player profile filters to use date-based selection instead of week-based selection.
@@ -112,6 +116,7 @@ Reference: [docs/phased-roadmap.md](c:/Sathish/workspace/club/leo-leaderboard-v2
 - [ ] Remove week-tab assumptions from processing logic.
 - [ ] Convert any remaining week-oriented calculations into date-oriented calculations.
 - [ ] Decide how to handle multiple club sessions on the same day if that becomes necessary.
+- [ ] Decide whether desktop uses a drawer or sheet so the leaderboard can remain visible underneath while score entry is open.
 
 ### Exit criteria
 
@@ -230,6 +235,7 @@ Reference: [docs/phased-roadmap.md](c:/Sathish/workspace/club/leo-leaderboard-v2
 - [ ] Add a live recent-match feed for the latest submissions.
 - [ ] Add a session summary panel for the current play date.
 - [ ] Add a `who is hot today` or `top movers today` section.
+- [ ] Integrate the existing mobile-first score-entry UI into the main app as a full-screen experience on small screens.
 - [ ] Add score-entry confirmation history so users can see recently submitted matches.
 - [ ] Add duplicate-submission detection and warning.
 - [ ] Add optional court number support.
@@ -266,6 +272,7 @@ Reference: [docs/phased-roadmap.md](c:/Sathish/workspace/club/leo-leaderboard-v2
 ### Design
 
 - [ ] Define the compact date-navigation UI before implementation.
+- [ ] Define the public score-entry CTA, entry route, and mobile full-screen interaction before implementation.
 - [ ] Define the narrative card system before building multiple one-off widgets.
 - [ ] Align both apps visually once they are on the same backend.
 

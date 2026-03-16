@@ -2,8 +2,8 @@ interface AppConfig {
   adminSecret: string | null;
   googleCredentials: string | null;
   spreadsheetId: string | null;
-  supabaseAnonKey: string | null;
-  supabaseServiceRoleKey: string | null;
+  supabasePublishableKey: string | null;
+  supabaseSecretKey: string | null;
   supabaseUrl: string | null;
 }
 
@@ -23,8 +23,12 @@ function loadConfig(): AppConfig {
     adminSecret: readEnv('ADMIN_SECRET'),
     googleCredentials: readEnv('GOOGLE_CREDENTIALS'),
     spreadsheetId: readEnv('GOOGLE_SHEET_ID') ?? readEnv('GOOGLE_SHEETS_ID'),
-    supabaseAnonKey: readEnv('SUPABASE_ANON_KEY') ?? readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
-    supabaseServiceRoleKey: readEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    supabasePublishableKey:
+      readEnv('SUPABASE_PUBLISHABLE_KEY') ??
+      readEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ??
+      readEnv('SUPABASE_ANON_KEY') ??
+      readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    supabaseSecretKey: readEnv('SUPABASE_SECRET_KEY') ?? readEnv('SUPABASE_SERVICE_ROLE_KEY'),
     supabaseUrl: readEnv('SUPABASE_URL') ?? readEnv('NEXT_PUBLIC_SUPABASE_URL'),
   };
 
@@ -56,12 +60,12 @@ export function getSupabaseUrl(): string | null {
   return loadConfig().supabaseUrl;
 }
 
-export function getSupabaseAnonKey(): string | null {
-  return loadConfig().supabaseAnonKey;
+export function getSupabasePublishableKey(): string | null {
+  return loadConfig().supabasePublishableKey;
 }
 
-export function getSupabaseServiceRoleKey(): string | null {
-  return loadConfig().supabaseServiceRoleKey;
+export function getSupabaseSecretKey(): string | null {
+  return loadConfig().supabaseSecretKey;
 }
 
 export function getRequiredSupabaseUrl(): string {
@@ -72,18 +76,18 @@ export function getRequiredSupabaseUrl(): string {
   return value;
 }
 
-export function getRequiredSupabaseAnonKey(): string {
-  const value = getSupabaseAnonKey();
+export function getRequiredSupabasePublishableKey(): string {
+  const value = getSupabasePublishableKey();
   if (!value) {
-    throw new Error('SUPABASE_ANON_KEY not configured');
+    throw new Error('SUPABASE_PUBLISHABLE_KEY not configured');
   }
   return value;
 }
 
-export function getRequiredSupabaseServiceRoleKey(): string {
-  const value = getSupabaseServiceRoleKey();
+export function getRequiredSupabaseSecretKey(): string {
+  const value = getSupabaseSecretKey();
   if (!value) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY not configured');
+    throw new Error('SUPABASE_SECRET_KEY not configured');
   }
   return value;
 }

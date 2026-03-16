@@ -32,10 +32,30 @@ export default function AdminPage() {
   const [summary, setSummary] = useState<ProcessingResponse['summary'] | null>(null);
   const [warnings, setWarnings] = useState<ProcessingWarning[]>([]);
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminSecret) {
+    setMessage(null);
+
+    try {
+      const response = await fetch('/api/admin/session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password: adminSecret }),
+      });
+
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to authenticate admin session');
+      }
+
       setIsAuthenticated(true);
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Unknown authentication error',
+      });
     }
   };
 
@@ -53,7 +73,6 @@ export default function AdminPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          adminSecret,
           scoresTabName,
         }),
       });
@@ -116,6 +135,12 @@ export default function AdminPage() {
               Access Admin Panel
             </button>
           </form>
+
+          {message && (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {message.text}
+            </div>
+          )}
         </div>
       </div>
     );

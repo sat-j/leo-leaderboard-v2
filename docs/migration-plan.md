@@ -31,7 +31,7 @@ The migration strategy is incremental to avoid a risky rewrite.
 
 ### Score capture
 
-- score-entry app posts to an external endpoint that writes to Google Sheets
+- score-entry UI exists separately today and posts to an external endpoint that writes to Google Sheets
 
 ### Leaderboard
 
@@ -49,7 +49,8 @@ The migration strategy is incremental to avoid a risky rewrite.
 
 ## Target State
 
-- score-entry app writes to backend APIs
+- the main site exposes a public `Enter Score` flow
+- score-entry UI writes to backend APIs
 - backend writes to Supabase
 - ratings and stats are computed from raw match data
 - leaderboard reads derived Supabase-backed data
@@ -156,10 +157,11 @@ That means:
 
 ### Tasks
 
-- update score-entry app to call the new backend API
+- integrate the existing score-entry UI into the main app behind a prominent homepage CTA
+- update score-entry submission to call the new backend API
 - stop writing new matches to Google Sheets in normal runtime flow
 - ensure admin flow creates matches in Supabase
-- add admin session/password protection for write endpoints
+- add server-side validation and anti-abuse controls for public submissions
 
 ### Optional fallback
 
@@ -336,4 +338,3 @@ The safest migration path is:
 5. remove Google Sheets from runtime
 
 This keeps the system usable while foundation changes happen underneath it.
-

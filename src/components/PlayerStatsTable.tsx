@@ -117,7 +117,6 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
               <option value="ADV">ADV</option>
               <option value="PLUS">PLUS</option>
               <option value="INT">INT</option>
-              <option value="BEG">BEG</option>
             </select>
           </div>
         </div>
@@ -236,8 +235,7 @@ export default function PlayerStatsTable({ stats, title, isOverall = false }: Pl
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
                       stat.level === 'ADV' ? 'bg-purple-100 text-purple-800' :
                       stat.level === 'PLUS' ? 'bg-blue-100 text-blue-800' :
-                      stat.level === 'INT' ? 'bg-green-100 text-green-800' :
-                      'bg-yellow-100 text-yellow-800'
+                      'bg-green-100 text-green-800'
                     }`}>
                       {stat.level}
                     </span>

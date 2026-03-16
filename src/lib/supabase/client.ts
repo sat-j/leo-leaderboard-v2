@@ -1,14 +1,13 @@
 'use client';
 
 import { createClient } from '@supabase/supabase-js';
-import { getRequiredSupabaseAnonKey, getRequiredSupabaseUrl } from '@/lib/config';
-import type { Database } from '@/lib/supabase/types';
+import { getRequiredSupabasePublishableKey, getRequiredSupabaseUrl } from '@/lib/config';
 
-let browserClient: ReturnType<typeof createClient<Database>> | null = null;
+let browserClient: ReturnType<typeof createClient> | null = null;
 
 export function getSupabaseBrowserClient() {
   if (!browserClient) {
-    browserClient = createClient<Database>(getRequiredSupabaseUrl(), getRequiredSupabaseAnonKey());
+    browserClient = createClient(getRequiredSupabaseUrl(), getRequiredSupabasePublishableKey());
   }
 
   return browserClient;

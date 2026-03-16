@@ -19,7 +19,7 @@
 | **Admin Dashboard** | Secure admin panel for processing weekly scores and updating ratings |
 | **Weekly Leaderboard** | Navigable week-by-week view of all stats and match results |
 | **Overall Leaderboard** | Cumulative rankings and career statistics across all weeks |
-| **Level-Based Rankings** | Separate leaderboards for ADV, INT, PLUS, and BEG skill tiers |
+| **Level-Based Rankings** | Separate leaderboards for ADV, INT, and PLUS skill tiers |
 | **Player Profiles** | Per-player analytics: win rates, partnerships, and opponent records |
 | **Fun Statistics** | 🌟 Rockstars (most improved), 👥 Close Buddies (best partner pair), ⚔️ Rivalries (most frequent opponents) |
 | **Responsive Design** | Mobile-first layout, works on all screen sizes |
@@ -256,7 +256,7 @@ function getAuth() {
 | Column | Field | Type | Notes |
 |---|---|---|---|
 | A | `PlayerName` | string | Unique player identifier |
-| B | `Level` | `ADV \| INT \| PLUS \| BEG` | Skill tier |
+| B | `Level` | `ADV \| INT \| PLUS` | Skill tier |
 | C | `InitialMu` | number | Starting mean (optional override) |
 | D | `InitialSigma` | number | Starting sigma (optional override) |
 
@@ -360,7 +360,7 @@ Admin-only endpoint (protected by `ADMIN_SECRET`). Reads scores, runs TrueSkill,
 All shared types are defined in `src/types/index.ts`:
 
 ```typescript
-type PlayerLevel = 'BEG' | 'PLUS' | 'INT' | 'ADV';
+type PlayerLevel = 'PLUS' | 'INT' | 'ADV';
 
 interface Player       { name, level, initialMu, initialSigma }
 interface Match        { weekNumber, player1, player2, player3, player4, score1, score2 }
@@ -501,7 +501,7 @@ PlayerName | Level | InitialMu | InitialSigma
 John       | ADV   | 35        | 8.33
 Sarah      | INT   | 25        | 8.33
 Mike       | PLUS  | 20        | 8.33
-Lisa       | BEG   | 10        | 8.33
+Lisa       | INT   | 25        | 8.33
 ```
 
 **Levels:**

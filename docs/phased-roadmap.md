@@ -28,6 +28,10 @@ This roadmap assumes we **reuse the existing apps where practical** and **replac
   - `Tue Mar 17`
 - Navigation moves by available play dates, not by `Week 1`, `Week 2`, `Week 3`.
 - Score entry no longer depends on human-maintained week tabs or manual week assignment.
+- Score entry becomes a public-facing experience from the main site.
+- The homepage gets a prominent `Enter Score` call to action.
+- Score entry opens in a full-screen mobile-first view that reuses the existing score-entry UI.
+- On desktop, the leaderboard may remain visible underneath only if score entry is presented as a drawer or sheet.
 - Storage moves from Google Sheets to Supabase.
 - Stats become more narrative and engaging, not just tables.
 
@@ -58,6 +62,7 @@ This roadmap assumes we **reuse the existing apps where practical** and **replac
 
 - Use **date/session-based navigation**, not week-based navigation.
 - Use **server-owned validation**, not frontend-only validation.
+- Allow **public score submission**, but protect quality with validation and anti-abuse controls.
 - Use **incremental processing** where possible.
 - Keep heavy recompute jobs out of page-load requests.
 - Treat raw match data and derived leaderboard data as separate layers.
@@ -112,6 +117,7 @@ Move away from Google Sheets without forcing a big-bang rewrite.
   - listing recent matches
   - listing players
   - retrieving leaderboard data
+- Integrate the score-entry experience into the main app as a public-facing flow.
 - Keep Google Sheets optionally available only as a temporary import source.
 - Add one-way migration/import script from Sheets to Supabase.
 - Refactor the score-entry app to submit to the new backend instead of writing to Sheets through an external endpoint.

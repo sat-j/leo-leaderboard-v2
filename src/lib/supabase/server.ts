@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { getRequiredSupabaseAnonKey, getRequiredSupabaseUrl } from '@/lib/config';
-import type { Database } from '@/lib/supabase/types';
+import { getRequiredSupabasePublishableKey, getRequiredSupabaseUrl } from '@/lib/config';
 
 export function createSupabaseServerClient() {
-  return createClient<Database>(getRequiredSupabaseUrl(), getRequiredSupabaseAnonKey(), {
+  return createClient(getRequiredSupabaseUrl(), getRequiredSupabasePublishableKey(), {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

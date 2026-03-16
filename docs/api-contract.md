@@ -21,6 +21,7 @@ The API should be treated as the boundary between frontend apps and platform dat
 - public pages should not depend on raw table structure
 - date-based navigation replaces week-based navigation
 - admin-only actions stay server-owned
+- public score submission should be easy to use on mobile and safe to operate at low trust
 - responses should be shaped for the UI, not just mirror the database
 
 ---
@@ -31,9 +32,8 @@ The API should be treated as the boundary between frontend apps and platform dat
 
 - public read endpoints: open
 - admin endpoints: protected by hidden admin URL plus password checked server-side
-- score submission:
-  - either admin-only initially
-  - or protected by the same hidden flow
+- public score submission is allowed from the main site
+- public score submission must still go through server-side validation and anti-abuse controls
 
 ## Stage 2
 
@@ -135,7 +135,62 @@ Used by:
 
 ---
 
-## 2. `GET /api/public/play-dates`
+## 2. `POST /api/public/score-submissions`
+
+Purpose:
+
+- let anyone submit a match from the main site score-entry flow
+
+Request:
+
+```json
+{
+  "playedAt": "2026-03-15T19:24:00Z",
+  "players": [
+    { "playerId": "uuid-1", "team": 1, "seat": 1 },
+    { "playerId": "uuid-2", "team": 1, "seat": 2 },
+    { "playerId": "uuid-3", "team": 2, "seat": 1 },
+    { "playerId": "uuid-4", "team": 2, "seat": 2 }
+  ],
+  "score1": 21,
+  "score2": 17,
+  "source": "homepage-score-entry"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "submissionId": "uuid",
+    "matchId": "uuid",
+    "playDate": "2026-03-15",
+    "status": "validated",
+    "warnings": []
+  }
+}
+```
+
+Validation and anti-abuse rules:
+
+- all four players must exist
+- no duplicated player in the same match
+- score rules must pass
+- ties rejected unless explicitly supported
+- rate limit repeated submissions from the same client
+- detect likely duplicate match submissions in a short time window
+- log suspicious submission patterns for admin review
+
+Used by:
+
+- homepage `Enter Score` CTA flow
+- full-screen mobile-first score-entry view
+
+---
+
+## 3. `GET /api/public/play-dates`
 
 Purpose:
 
@@ -163,7 +218,7 @@ Response:
 
 ---
 
-## 3. `GET /api/public/leaderboard`
+## 4. `GET /api/public/leaderboard`
 
 Purpose:
 
@@ -193,8 +248,7 @@ Response:
     "levelLeaderboards": {
       "ADV": [],
       "INT": [],
-      "PLUS": [],
-      "BEG": []
+      "PLUS": []
     },
     "highlights": {
       "rockstars": [],
@@ -211,10 +265,11 @@ Response:
 Notes:
 
 - this replaces the current week-based leaderboard endpoint
+- on desktop, the leaderboard may remain visible underneath a score-entry drawer or sheet
 
 ---
 
-## 4. `GET /api/public/leaderboard/overall`
+## 5. `GET /api/public/leaderboard/overall`
 
 Purpose:
 
@@ -235,7 +290,7 @@ Response:
 
 ---
 
-## 5. `GET /api/public/players/{playerSlug}`
+## 6. `GET /api/public/players/{playerSlug}`
 
 Purpose:
 
@@ -264,7 +319,7 @@ Response:
 
 ---
 
-## 6. `GET /api/public/players/{playerSlug}/stats`
+## 7. `GET /api/public/players/{playerSlug}/stats`
 
 Purpose:
 
@@ -300,7 +355,7 @@ Response:
 
 ---
 
-## 7. `GET /api/public/matches/recent`
+## 8. `GET /api/public/matches/recent`
 
 Purpose:
 
@@ -337,7 +392,7 @@ Response:
 
 ## Admin Endpoints
 
-## 8. `POST /api/admin/session`
+## 9. `POST /api/admin/session`
 
 Purpose:
 
@@ -369,11 +424,11 @@ Notes:
 
 ---
 
-## 9. `POST /api/admin/matches`
+## 10. `POST /api/admin/matches`
 
 Purpose:
 
-- create a single match from the score-entry app or admin UI
+- create a single match from admin tools for correction, manual entry, or backfill
 
 Request:
 
@@ -414,7 +469,7 @@ Validation rules:
 
 ---
 
-## 10. `POST /api/admin/matches/bulk`
+## 11. `POST /api/admin/matches/bulk`
 
 Purpose:
 
@@ -443,7 +498,7 @@ Response:
 
 ---
 
-## 11. `GET /api/admin/matches`
+## 12. `GET /api/admin/matches`
 
 Purpose:
 
@@ -470,7 +525,7 @@ Response:
 
 ---
 
-## 12. `PATCH /api/admin/matches/{matchId}`
+## 13. `PATCH /api/admin/matches/{matchId}`
 
 Purpose:
 
@@ -501,7 +556,7 @@ Notes:
 
 ---
 
-## 13. `POST /api/admin/processing/rebuild`
+## 14. `POST /api/admin/processing/rebuild`
 
 Purpose:
 
@@ -536,7 +591,7 @@ Notes:
 
 ---
 
-## 14. `GET /api/admin/processing/runs`
+## 15. `GET /api/admin/processing/runs`
 
 Purpose:
 
@@ -555,7 +610,7 @@ Response:
 
 ---
 
-## 15. `GET /api/admin/processing/runs/{runId}`
+## 16. `GET /api/admin/processing/runs/{runId}`
 
 Purpose:
 
@@ -583,7 +638,7 @@ Response:
 
 ---
 
-## 16. `POST /api/admin/players`
+## 17. `POST /api/admin/players`
 
 Purpose:
 
@@ -602,7 +657,7 @@ Request:
 
 ---
 
-## 17. `PATCH /api/admin/players/{playerId}`
+## 18. `PATCH /api/admin/players/{playerId}`
 
 Purpose:
 
@@ -642,6 +697,7 @@ Suggested standard codes:
 - `NOT_FOUND`
 - `VALIDATION_ERROR`
 - `DUPLICATE_MATCH`
+- `RATE_LIMITED`
 - `INVALID_SCORE`
 - `PLAYER_NOT_FOUND`
 - `PROCESSING_FAILED`
@@ -667,6 +723,7 @@ If the platform grows:
 Build first:
 
 - `GET /api/public/players`
+- `POST /api/public/score-submissions`
 - `GET /api/public/play-dates`
 - `GET /api/public/leaderboard`
 - `GET /api/public/leaderboard/overall`
@@ -679,9 +736,8 @@ Build first:
 
 This is enough to support:
 
-- score entry
+- public score entry from the homepage
 - public leaderboard
 - hidden admin flow
 - rebuild operations
 - future migration away from Google Sheets
-

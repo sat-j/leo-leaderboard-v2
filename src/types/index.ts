@@ -1,6 +1,6 @@
 // TypeScript type definitions
 
-export type PlayerLevel = 'BEG' | 'PLUS' | 'INT' | 'ADV';
+export type PlayerLevel = 'PLUS' | 'INT' | 'ADV';
 
 export interface Rating {
   mu: number;

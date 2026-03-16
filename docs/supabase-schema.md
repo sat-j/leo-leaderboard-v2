@@ -89,7 +89,7 @@ Recommended implementation:
 
 - Keep password verification in server-side code, not the client.
 - Store the admin password as an environment variable, not in Supabase.
-- Use Supabase with a server-side service role for admin-only write actions.
+- Use Supabase with a server-side secret key for admin-only write actions.
 - Public reads should use anonymous/public-safe queries or server-side read APIs.
 
 This means:
@@ -202,7 +202,7 @@ Columns:
 - `display_name text not null`
 - `slug text unique not null`
 - `level text not null`
-  - allowed values for now: `BEG`, `PLUS`, `INT`, `ADV`
+  - allowed values for now: `PLUS`, `INT`, `ADV`
 - `initial_mu numeric(8,3) not null`
 - `initial_sigma numeric(8,3) not null`
 - `is_active boolean not null default true`
@@ -609,14 +609,14 @@ At minimum:
 Use a simple model:
 
 - public read access to safe leaderboard views or server-owned read APIs
-- admin writes done through server-side code using service role
+- admin writes done through server-side code using the Supabase secret key
 - no direct client write access to core tables
 
 Recommended:
 
 - enable RLS on all core tables
 - do not allow anonymous direct inserts into `matches`
-- do not expose service role to the client
+- do not expose the Supabase secret key to the client
 
 ## Stage 2
 

@@ -1,4 +1,4 @@
-export type PlayerLevel = 'BEG' | 'PLUS' | 'INT' | 'ADV';
+export type PlayerLevel = 'PLUS' | 'INT' | 'ADV';
 
 export interface Database {
   public: {
@@ -106,6 +106,31 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['match_participants']['Insert']>;
+      };
+      public_submission_logs: {
+        Row: {
+          id: string;
+          ip_hash: string;
+          fingerprint_hash: string;
+          source: string;
+          status: string;
+          reason_code: string | null;
+          request_payload: Record<string, unknown>;
+          match_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ip_hash: string;
+          fingerprint_hash: string;
+          source?: string;
+          status: string;
+          reason_code?: string | null;
+          request_payload: Record<string, unknown>;
+          match_id?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['public_submission_logs']['Insert']>;
       };
     };
   };

@@ -29,7 +29,7 @@ Current operating model:
 
 - the admin password must be checked server-side
 - the password must never be trusted from client-only state
-- the service role key must never be exposed to the browser
+- the Supabase secret key must never be exposed to the browser
 - all privileged writes must go through server-side routes
 
 ---
@@ -74,10 +74,10 @@ Record a valid match in the platform.
 
 ### Steps
 
-1. Open score-entry flow.
+1. Open the homepage and use the prominent `Enter Score` CTA.
 2. Select four players.
 3. Enter scores.
-4. Submit to `POST /api/admin/matches`.
+4. Submit to `POST /api/public/score-submissions`.
 5. Backend validates the payload.
 6. If valid:
    - create or resolve the `play_date`
@@ -99,11 +99,13 @@ Record a valid match in the platform.
 - invalid score
 - unknown player
 - duplicate match suspicion
-- unauthorized request
+- rate-limited request
+- suspicious submission held for review
 
 ### Recovery
 
 - correct data and resubmit
+- wait for cooldown if rate-limited
 - inspect admin logs or validation errors
 
 ---
@@ -210,7 +212,7 @@ Resolve match records that could not be processed.
 
 ### Checks
 
-- verify admin session or password flow
+- verify public submission API health
 - verify server logs
 - verify Supabase availability
 - verify environment variables
@@ -312,14 +314,16 @@ The system should never silently pretend success when data integrity is uncertai
 Expected secure environment values:
 
 - `SUPABASE_URL`
-- `SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `ADMIN_SECRET`
 - optional session secret if custom session signing is used
 
 Rules:
 
-- `SUPABASE_SERVICE_ROLE_KEY` is server-only
+- `SUPABASE_SECRET_KEY` is server-only
 - `ADMIN_SECRET` is server-only
 - public clients must only use safe keys and public-safe endpoints
 
@@ -404,4 +408,3 @@ When in doubt:
 
 Raw match history is the source of truth.
 Derived data should be replaceable.
-

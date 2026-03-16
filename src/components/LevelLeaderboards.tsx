@@ -11,15 +11,13 @@ interface LevelLeaderboardsProps {
 const LEVEL_COLORS = {
   ADV: 'border-yellow-400 bg-yellow-50',
   INT: 'border-gray-400 bg-gray-50',
-  PLUS: 'border-orange-400 bg-orange-50',
-  BEG: 'border-green-400 bg-green-50'
+  PLUS: 'border-orange-400 bg-orange-50'
 };
 
 const LEVEL_NAMES = {
   ADV: 'Advanced',
   INT: 'Intermediate',
-  PLUS: 'Plus',
-  BEG: 'Beginner'
+  PLUS: 'Plus'
 };
 
 function getRatingGainColorClass(ratingGain: number | undefined): string {
@@ -30,8 +28,6 @@ function getRatingGainColorClass(ratingGain: number | undefined): string {
 }
 
 export default function LevelLeaderboards({ levelLeaderboards }: LevelLeaderboardsProps) {
-  // Only showing ADV, INT, and PLUS levels in the main view
-  // BEG level can be added if needed
   const levels: PlayerLevel[] = ['ADV', 'INT', 'PLUS'];
 
   return (

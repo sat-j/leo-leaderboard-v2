@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import WeekNavigation from '@/components/WeekNavigation';
 import StatsGrid from '@/components/StatsGrid';
 import LevelLeaderboards from '@/components/LevelLeaderboards';
@@ -94,6 +95,15 @@ export default function Home() {
             Leo Badminton Club - Leaderboard
           </h1>
           <p className="text-electric-200">Track your progress and compete with your club!</p>
+          <div className="mt-5 flex justify-center">
+            <Link
+              href="/submit-score"
+              className="inline-flex items-center gap-2 rounded-full bg-coral-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-coral-900/30 transition-transform hover:-translate-y-0.5 hover:bg-coral-400"
+            >
+              <span>Enter Score</span>
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
         </div>
 
         {/* Week Navigation */}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readPlayersTab, readScoresTab, readRatingsTab } from '@/lib/googleSheets';
 import { calculatePlayerOverallStats } from '@/lib/calculations';
 import { getSpreadsheetId } from '@/lib/config';
+import { normalizePlayerLevel } from '@/lib/playerLevels';
 import { Match, PlayerRating, PlayerLevel } from '@/types';
 
 export async function GET() {
@@ -47,7 +48,7 @@ export async function GET() {
       playerRows.forEach((row: string[]) => {
         const playerName = row[0];
         const levelIndex = headers.indexOf('CurrentLevel');
-        const level = (row[levelIndex] || 'BEG') as PlayerLevel;
+        const level = normalizePlayerLevel(String(row[levelIndex] || 'INT'));
         playerLevels.set(playerName, level);
 
         const weekMuIndex = headers.indexOf(`Week${week}_Mu`);

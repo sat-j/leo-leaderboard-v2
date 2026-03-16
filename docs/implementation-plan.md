@@ -75,12 +75,13 @@ We should treat the implementation as 5 parallel workstreams with clear dependen
 ### Workstream C - Backend APIs
 
 - public read APIs
-- admin write APIs
+- public score-submission APIs
+- admin moderation and correction APIs
 - processing/rebuild APIs
 
 ### Workstream D - Frontend migration
 
-- score-entry app migration
+- homepage score-entry integration
 - leaderboard read migration
 - date-navigation UX migration
 
@@ -168,29 +169,34 @@ For speed, I recommend:
 
 ---
 
-## Sprint 2 - Admin Session And Write APIs
+## Sprint 2 - Admin Session And Submission APIs
 
 ### Goal
 
-Make the new backend able to accept secure writes.
+Make the new backend able to accept protected admin actions and validated public score submissions.
 
 ### Tasks
 
 - implement admin session endpoint
 - implement hidden admin password verification
 - issue HTTP-only admin session cookie
-- create `POST /api/admin/matches`
+- create `POST /api/public/score-submissions`
 - create `GET /api/admin/matches`
 - add validation layer for new match submissions
 - add duplicate detection rules
+- add basic anti-abuse controls:
+  - rate limiting
+  - duplicate-submission suppression
+  - suspicious submission logging
 
 ### Deliverable
 
-- secure admin write flow on top of Supabase
+- public score submission plus secure admin moderation flow on top of Supabase
 
 ### Recommended files to create
 
 - `app/api/admin/session/route.ts`
+- `app/api/public/score-submissions/route.ts`
 - `app/api/admin/matches/route.ts`
 - `src/lib/auth/adminSession.ts`
 - `src/lib/validation/matches.ts`
@@ -198,7 +204,7 @@ Make the new backend able to accept secure writes.
 
 ### Important note
 
-At this stage, the score-entry app can remain unchanged while we test the new write path manually.
+At this stage, we can test the new submission path manually before wiring it into the homepage CTA and reusable score-entry UI.
 
 ---
 
@@ -312,28 +318,33 @@ Switch the leaderboard backend reads from Sheets to Supabase.
 
 ---
 
-## Sprint 6 - Migrate Score Entry App
+## Sprint 6 - Integrate Public Score Entry Into Main App
 
 ### Goal
 
-Make new score submissions go to the new backend.
+Make public score submission a first-class part of the main site.
 
 ### Tasks
 
-- point player loading to new API
-- point match submission to `POST /api/admin/matches`
+- add a prominent `Enter Score` CTA on the homepage
+- create a dedicated score-entry route or full-screen mobile-first experience
+- reuse the existing score-entry UI from the companion repo inside this app
+- keep the leaderboard visible underneath only on desktop when using a drawer or sheet pattern
+- point player loading to the new public players API
+- point match submission to `POST /api/public/score-submissions`
 - replace optimistic fake-success behavior with real success/error behavior
 - show validation errors clearly
 - keep recent matches view using the new backend
+- surface duplicate and anti-abuse warnings clearly without blocking legitimate submissions unnecessarily
 
 ### Deliverable
 
-- score-entry app fully using the new API contract
+- public score-entry experience fully integrated into the main app and using the new API contract
 
 ### Recommended follow-up improvements
 
-- add session timeout handling
-- add clearer duplicate warnings
+- add submission cooldown messaging
+- add clearer duplicate and suspicious-activity warnings
 
 ### Important UX change
 
@@ -503,7 +514,7 @@ If the goal is to start ASAP, build these first:
 4. `src/lib/auth/adminSession.ts`
 5. `src/lib/validation/matches.ts`
 6. `app/api/admin/session/route.ts`
-7. `app/api/admin/matches/route.ts`
+7. `app/api/public/score-submissions/route.ts`
 8. `supabase/migrations/0001_initial_schema.sql`
 9. `scripts/import_players.ts`
 10. `scripts/import_matches.ts`
@@ -529,7 +540,7 @@ This is the minimum set that unlocks real progress.
 ### Then
 
 - public read APIs
-- score-entry migration
+- public score-entry integration
 - leaderboard migration
 
 ### Then
@@ -610,11 +621,11 @@ If you want the fastest path to momentum, start with this exact sequence:
 
 1. build Supabase schema
 2. build admin password session flow
-3. build `POST /api/admin/matches`
-4. test manual match insertion end to end
+3. build `POST /api/public/score-submissions`
+4. test manual public match submission end to end
 5. import historical data
 6. build rebuild processing
-7. switch score-entry app
+7. integrate public score entry into the homepage flow
 8. switch leaderboard reads
 9. replace weeks with dates
 

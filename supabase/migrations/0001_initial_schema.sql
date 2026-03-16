@@ -27,7 +27,7 @@ create table if not exists public.players (
   id uuid primary key default gen_random_uuid(),
   display_name text not null,
   slug text not null unique,
-  level text not null check (level in ('BEG', 'PLUS', 'INT', 'ADV')),
+  level text not null check (level in ('PLUS', 'INT', 'ADV')),
   initial_mu numeric(8,3) not null,
   initial_sigma numeric(8,3) not null,
   is_active boolean not null default true,
@@ -129,6 +129,15 @@ create table if not exists public.player_narratives (
   metadata jsonb,
   computed_at timestamptz not null default now()
 );
+
+create or replace function public.increment_play_date_match_count(play_date_id_input uuid)
+returns void
+language sql
+as $$
+  update public.play_dates
+  set match_count = match_count + 1
+  where id = play_date_id_input;
+$$;
 
 create table if not exists public.partnership_summaries (
   id uuid primary key default gen_random_uuid(),

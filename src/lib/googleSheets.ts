@@ -1,6 +1,7 @@
 import { google } from 'googleapis';
 import { Player, Match, PlayerLevel } from '@/types';
 import { getGoogleCredentials } from '@/lib/config';
+import { normalizePlayerLevel } from '@/lib/playerLevels';
 
 function getAuth() {
   const credentials = getGoogleCredentials();
@@ -57,7 +58,7 @@ export async function readPlayersTab(spreadsheetId: string): Promise<Player[]> {
   
   return data.map(row => ({
     name: row[0] || '',
-    level: (row[1] || 'BEG') as PlayerLevel,
+    level: normalizePlayerLevel(row[1]),
     initialMu: parseFloat(row[2] || '25'),
     initialSigma: parseFloat(row[3] || '8.33')
   }));
