@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the target API contract for the badminton platform after the move to Supabase and date-based navigation.
+This document defines the active API contract for the badminton platform on Supabase and date-based navigation.
 
 It is designed to support:
 
@@ -740,4 +740,4 @@ This is enough to support:
 - public leaderboard
 - hidden admin flow
 - rebuild operations
-- future migration away from Google Sheets
+- future RBAC and richer workflow extensions

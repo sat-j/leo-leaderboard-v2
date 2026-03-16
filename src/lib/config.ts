@@ -1,7 +1,5 @@
 interface AppConfig {
   adminSecret: string | null;
-  googleCredentials: string | null;
-  spreadsheetId: string | null;
   supabasePublishableKey: string | null;
   supabaseSecretKey: string | null;
   supabaseUrl: string | null;
@@ -21,8 +19,6 @@ function loadConfig(): AppConfig {
 
   cachedConfig = {
     adminSecret: readEnv('ADMIN_SECRET'),
-    googleCredentials: readEnv('GOOGLE_CREDENTIALS'),
-    spreadsheetId: readEnv('GOOGLE_SHEET_ID') ?? readEnv('GOOGLE_SHEETS_ID'),
     supabasePublishableKey:
       readEnv('SUPABASE_PUBLISHABLE_KEY') ??
       readEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') ??
@@ -37,23 +33,6 @@ function loadConfig(): AppConfig {
 
 export function getAdminSecret(): string | null {
   return loadConfig().adminSecret;
-}
-
-export function getGoogleCredentials(): string | null {
-  return loadConfig().googleCredentials;
-}
-
-export function getSpreadsheetId(): string | null {
-  return loadConfig().spreadsheetId;
-}
-
-export function getRequiredSpreadsheetId(): string {
-  const spreadsheetId = getSpreadsheetId();
-  if (!spreadsheetId) {
-    throw new Error('Google Sheet ID not configured');
-  }
-
-  return spreadsheetId;
 }
 
 export function getSupabaseUrl(): string | null {

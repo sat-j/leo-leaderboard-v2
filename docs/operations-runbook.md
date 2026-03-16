@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This runbook describes how to operate the badminton platform during and after the migration to Supabase.
+This runbook describes how to operate the badminton platform in its current Supabase-first architecture.
 
 It focuses on:
 

@@ -1,0 +1,21 @@
+Canonical matches: 981
+Timestamp rows available: 527
+Assigned exact timestamps: 518
+Assigned swapped-team timestamps: 0
+Inferred Saturday timestamps: 463
+Unused timestamp rows remaining: 9
+
+Week to Saturday mapping:
+  w1: 2026-01-10 (Sat), 2026-01-11 (Sun)
+  w2: 2026-01-17 (Sat), 2026-01-18 (Sun)
+  w3: 2026-01-24 (Sat), 2026-01-25 (Sun)
+  w4: 2026-01-31 (Sat), 2026-02-01 (Sun)
+  w5: 2026-02-07 (Sat), 2026-02-08 (Sun)
+  w6: 2026-02-14 (Sat), 2026-02-15 (Sun)
+  w7: 2026-02-21 (Sat), 2026-02-22 (Sun)
+  w8: 2026-02-28 (Sat), 2026-03-01 (Sun)
+  w9: 2026-03-07 (Sat), 2026-03-08 (Sun)
+  w10: 2026-03-14 (Sat), 2026-03-15 (Sun)
+
+Unmatched player names against data/players.csv:
+  None
